@@ -17,6 +17,9 @@ const users_module_1 = require("./modules/users/users.module");
 const roles_module_1 = require("./modules/roles/roles.module");
 const permissions_module_1 = require("./modules/permissions/permissions.module");
 const auth_module_1 = require("./modules/auth/auth.module");
+const warehouses_module_1 = require("./modules/warehouses/warehouses.module");
+const categories_module_1 = require("./modules/categories/categories.module");
+const units_module_1 = require("./modules/units/units.module");
 const jwt_auth_guard_1 = require("./modules/auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("./modules/auth/guards/roles.guard");
 const permissions_guard_1 = require("./modules/auth/guards/permissions.guard");
@@ -48,6 +51,9 @@ exports.AppModule = AppModule = __decorate([
             users_module_1.UsersModule,
             roles_module_1.RolesModule,
             permissions_module_1.PermissionsModule,
+            warehouses_module_1.WarehousesModule,
+            categories_module_1.CategoriesModule,
+            units_module_1.UnitsModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [

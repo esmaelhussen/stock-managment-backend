@@ -15,30 +15,45 @@ const app_service_1 = require("./app.service");
 const users_service_1 = require("./modules/users/users.service");
 const roles_service_1 = require("./modules/roles/roles.service");
 const permissions_service_1 = require("./modules/permissions/permissions.service");
+const warehouses_service_1 = require("./modules/warehouses/warehouses.service");
+const categories_service_1 = require("./modules/categories/categories.service");
+const units_service_1 = require("./modules/units/units.service");
 let AppController = class AppController {
     appService;
     usersService;
     rolesService;
     permissionsService;
-    constructor(appService, usersService, rolesService, permissionsService) {
+    warehousesService;
+    categoriesService;
+    unitsService;
+    constructor(appService, usersService, rolesService, permissionsService, warehousesService, categoriesService, unitsService) {
         this.appService = appService;
         this.usersService = usersService;
         this.rolesService = rolesService;
         this.permissionsService = permissionsService;
+        this.warehousesService = warehousesService;
+        this.categoriesService = categoriesService;
+        this.unitsService = unitsService;
     }
     getHello() {
         return this.appService.getHello();
     }
     async getDashboardStats() {
-        const [users, roles, permissions] = await Promise.all([
+        const [users, roles, permissions, warehouses, categories, units] = await Promise.all([
             this.usersService.findAll(),
             this.rolesService.findAll(),
             this.permissionsService.findAll(),
+            this.warehousesService.findAll(),
+            this.categoriesService.findAll(),
+            this.unitsService.findAll(),
         ]);
         return {
             totalUsers: users.length,
             activeRoles: roles.length,
             permissions: permissions.length,
+            warehouses: warehouses.length,
+            categories: categories.length,
+            units: units.length,
             stockItems: 0,
         };
     }
@@ -61,6 +76,9 @@ exports.AppController = AppController = __decorate([
     __metadata("design:paramtypes", [app_service_1.AppService,
         users_service_1.UsersService,
         roles_service_1.RolesService,
-        permissions_service_1.PermissionsService])
+        permissions_service_1.PermissionsService,
+        warehouses_service_1.WarehousesService,
+        categories_service_1.CategoriesService,
+        units_service_1.UnitsService])
 ], AppController);
 //# sourceMappingURL=app.controller.js.map

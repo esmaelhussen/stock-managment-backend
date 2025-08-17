@@ -8,6 +8,9 @@ import { UsersModule } from './modules/users/users.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { WarehousesModule } from './modules/warehouses/warehouses.module';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { UnitsModule } from './modules/units/units.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { PermissionsGuard } from './modules/auth/guards/permissions.guard';
@@ -32,10 +35,13 @@ import { PermissionsGuard } from './modules/auth/guards/permissions.guard';
       }),
       inject: [ConfigService],
     }),
-    AuthModule,
-    UsersModule,
-    RolesModule,
-    PermissionsModule,
+  AuthModule,
+  UsersModule,
+  RolesModule,
+  PermissionsModule,
+  WarehousesModule,
+  CategoriesModule,
+  UnitsModule,
   ],
   controllers: [AppController],
   providers: [
