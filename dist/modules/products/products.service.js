@@ -29,12 +29,14 @@ let ProductsService = class ProductsService {
         this.unitRepository = unitRepository;
     }
     async create(createProductDto) {
-        const { name, sku, categoryId, unitId } = createProductDto;
+        const { name, sku, price, categoryId, unitId } = createProductDto;
         const existingProduct = await this.productRepository.findOneBy({ sku });
         if (existingProduct) {
             throw new common_1.ConflictException('Product with this SKU already exists');
         }
-        const category = await this.categoryRepository.findOneBy({ id: categoryId });
+        const category = await this.categoryRepository.findOneBy({
+            id: categoryId,
+        });
         if (!category) {
             throw new common_1.NotFoundException('Category not found');
         }
@@ -47,6 +49,7 @@ let ProductsService = class ProductsService {
             sku,
             category,
             unit,
+            price,
             description: createProductDto.description,
         });
         return this.productRepository.save(product);
@@ -64,14 +67,18 @@ let ProductsService = class ProductsService {
     async update(id, updateProductDto) {
         const product = await this.findOne(id);
         if (updateProductDto.categoryId) {
-            const category = await this.categoryRepository.findOneBy({ id: updateProductDto.categoryId });
+            const category = await this.categoryRepository.findOneBy({
+                id: updateProductDto.categoryId,
+            });
             if (!category) {
                 throw new common_1.NotFoundException('Category not found');
             }
             product.category = category;
         }
         if (updateProductDto.unitId) {
-            const unit = await this.unitRepository.findOneBy({ id: updateProductDto.unitId });
+            const unit = await this.unitRepository.findOneBy({
+                id: updateProductDto.unitId,
+            });
             if (!unit) {
                 throw new common_1.NotFoundException('Unit not found');
             }

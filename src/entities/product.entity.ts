@@ -16,6 +16,9 @@ export class Product {
   @Column({ unique: true })
   sku: string;
 
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  price: number;
+
   @ManyToOne(() => Category, (category) => category.id, { eager: true })
   category: Category;
 

@@ -18,6 +18,7 @@ let Product = class Product {
     name;
     description;
     sku;
+    price;
     category;
     unit;
 };
@@ -38,6 +39,10 @@ __decorate([
     (0, typeorm_1.Column)({ unique: true }),
     __metadata("design:type", String)
 ], Product.prototype, "sku", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ type: 'decimal', precision: 10, scale: 2 }),
+    __metadata("design:type", Number)
+], Product.prototype, "price", void 0);
 __decorate([
     (0, typeorm_1.ManyToOne)(() => category_entity_1.Category, (category) => category.id, { eager: true }),
     __metadata("design:type", category_entity_1.Category)

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Product } from '../../entities/product.entity';
@@ -19,14 +23,16 @@ export class ProductsService {
   ) {}
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
-    const { name, sku, categoryId, unitId } = createProductDto;
+    const { name, sku, price, categoryId, unitId } = createProductDto;
 
     const existingProduct = await this.productRepository.findOneBy({ sku });
     if (existingProduct) {
       throw new ConflictException('Product with this SKU already exists');
     }
 
-    const category = await this.categoryRepository.findOneBy({ id: categoryId });
+    const category = await this.categoryRepository.findOneBy({
+      id: categoryId,
+    });
     if (!category) {
       throw new NotFoundException('Category not found');
     }
@@ -41,6 +47,7 @@ export class ProductsService {
       sku,
       category,
       unit,
+      price,
       description: createProductDto.description,
     });
 
@@ -59,11 +66,16 @@ export class ProductsService {
     return product;
   }
 
-  async update(id: string, updateProductDto: UpdateProductDto): Promise<Product> {
+  async update(
+    id: string,
+    updateProductDto: UpdateProductDto,
+  ): Promise<Product> {
     const product = await this.findOne(id);
 
     if (updateProductDto.categoryId) {
-      const category = await this.categoryRepository.findOneBy({ id: updateProductDto.categoryId });
+      const category = await this.categoryRepository.findOneBy({
+        id: updateProductDto.categoryId,
+      });
       if (!category) {
         throw new NotFoundException('Category not found');
       }
@@ -71,7 +83,9 @@ export class ProductsService {
     }
 
     if (updateProductDto.unitId) {
-      const unit = await this.unitRepository.findOneBy({ id: updateProductDto.unitId });
+      const unit = await this.unitRepository.findOneBy({
+        id: updateProductDto.unitId,
+      });
       if (!unit) {
         throw new NotFoundException('Unit not found');
       }

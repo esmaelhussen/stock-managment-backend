@@ -5,6 +5,7 @@ export declare class Product {
     name: string;
     description: string;
     sku: string;
+    price: number;
     category: Category;
     unit: Unit;
 }
