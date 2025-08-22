@@ -169,7 +169,8 @@ let AuthService = class AuthService {
         if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
             throw new common_1.BadRequestException('Token expired');
         }
-        user.password = dto.newPassword;
+        const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+        user.password = hashedPassword;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpires = undefined;
         await this.usersService.update(user.id, user);
