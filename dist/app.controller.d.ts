@@ -21,7 +21,6 @@ export declare class AppController {
         totalUsers: number;
         activeRoles: number;
         permissions: number;
-        stockItems: number;
         warehouses: number;
         categories: number;
         units: number;

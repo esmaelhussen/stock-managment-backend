@@ -15,6 +15,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { WarehouseModule } from './modules/warehouse/warehouse.module';
 import { UnitsModule } from './modules/units/units.module';
 import { ProductsModule } from './modules/products/products.module';
+import { StockTransactionModule } from './modules/stock-transactions/stockTransaction.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ProductsModule } from './modules/products/products.module';
     WarehouseModule,
     UnitsModule,
     ProductsModule,
+    StockTransactionModule,
   ],
   controllers: [AppController],
   providers: [

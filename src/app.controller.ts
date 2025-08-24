@@ -43,7 +43,6 @@ export class AppController {
       totalUsers: users.length,
       activeRoles: roles.length,
       permissions: permissions.length,
-      stockItems: 0,
       warehouses: warehouses.length,
       categories: categories.length,
       units: units.length,
