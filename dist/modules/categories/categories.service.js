@@ -32,7 +32,9 @@ let CategoriesService = class CategoriesService {
         return cat;
     }
     async create(data) {
-        const existing = await this.categoryRepository.findOneBy({ name: data.name });
+        const existing = await this.categoryRepository.findOneBy({
+            name: data.name,
+        });
         if (existing)
             throw new common_1.ConflictException('A category with this name already exists.');
         const cat = this.categoryRepository.create(data);

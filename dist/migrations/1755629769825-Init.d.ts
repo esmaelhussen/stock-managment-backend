@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm';
 export declare class Init1755629769825 implements MigrationInterface {
     name: string;
     up(queryRunner: QueryRunner): Promise<void>;

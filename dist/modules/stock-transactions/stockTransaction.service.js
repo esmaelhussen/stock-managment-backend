@@ -45,11 +45,15 @@ let StockTransactionService = class StockTransactionService {
         });
         if (!sourceWarehouse)
             throw new common_1.BadRequestException('Source warehouse not found');
-        const targetWarehouse = await this.warehouseRepository.findOne({
-            where: { id: targetWarehouseId },
-        });
-        if (!targetWarehouse)
-            throw new common_1.BadRequestException('Target warehouse not found');
+        let targetWarehouse = undefined;
+        if (type === stockTransaction_entity_1.TransactionType.TRANSFER && targetWarehouseId) {
+            const warehouse = await this.warehouseRepository.findOne({
+                where: { id: targetWarehouseId },
+            });
+            if (!warehouse)
+                throw new common_1.BadRequestException('Target warehouse not found');
+            targetWarehouse = warehouse;
+        }
         if (type === stockTransaction_entity_1.TransactionType.ADD) {
             let stock = await this.stockRepository.findOne({
                 where: {
@@ -58,8 +62,9 @@ let StockTransactionService = class StockTransactionService {
                 },
             });
             if (stock) {
+                const totalValue = stock.quantity * stock.price + quantity * product.price;
                 const totalQuantity = stock.quantity + quantity;
-                stock.price = Number(product.price) * quantity + Number(stock.price);
+                stock.price = totalValue / totalQuantity;
                 stock.quantity = totalQuantity;
             }
             else {
@@ -67,7 +72,7 @@ let StockTransactionService = class StockTransactionService {
                     warehouse: sourceWarehouse,
                     product,
                     quantity,
-                    price: quantity * product.price,
+                    price: product.price,
                 });
             }
             await this.stockRepository.save(stock);
@@ -83,7 +88,6 @@ let StockTransactionService = class StockTransactionService {
                 throw new common_1.BadRequestException('Insufficient stock to remove');
             }
             stock.quantity -= quantity;
-            stock.price -= quantity * product.price;
             await this.stockRepository.save(stock);
         }
         else if (type === stockTransaction_entity_1.TransactionType.TRANSFER) {
@@ -99,13 +103,11 @@ let StockTransactionService = class StockTransactionService {
                     product: { id: productId },
                 },
             });
-            if (!sourceStock ||
-                sourceStock.quantity < quantity ||
-                sourceStock.price < quantity * product.price) {
+            if (!sourceStock || sourceStock.quantity < quantity) {
                 throw new common_1.BadRequestException('Insufficient stock to transfer');
             }
+            const transferPrice = sourceStock.price || product.price;
             sourceStock.quantity -= quantity;
-            sourceStock.price -= quantity * product.price;
             await this.stockRepository.save(sourceStock);
             let targetStock = await this.stockRepository.findOne({
                 where: {
@@ -114,16 +116,17 @@ let StockTransactionService = class StockTransactionService {
                 },
             });
             if (targetStock) {
-                targetStock.quantity += quantity;
-                targetStock.price =
-                    Number(targetStock.price) + quantity * product.price;
+                const totalValue = targetStock.quantity * targetStock.price + quantity * transferPrice;
+                const totalQuantity = targetStock.quantity + quantity;
+                targetStock.price = totalValue / totalQuantity;
+                targetStock.quantity = totalQuantity;
             }
             else {
                 targetStock = this.stockRepository.create({
                     warehouse: targetWarehouse,
                     product,
                     quantity,
-                    price: product.price * quantity,
+                    price: transferPrice,
                 });
             }
             await this.stockRepository.save(targetStock);
@@ -131,24 +134,27 @@ let StockTransactionService = class StockTransactionService {
         const transaction = this.stockTransactionRepository.create({
             product,
             quantity,
-            price: product.price * quantity,
+            price: product.price,
             type,
-            sourceWarehouse: type === stockTransaction_entity_1.TransactionType.REMOVE ||
-                type === stockTransaction_entity_1.TransactionType.TRANSFER ||
-                type === stockTransaction_entity_1.TransactionType.ADD
-                ? sourceWarehouse
+            sourceWarehouse,
+            targetWarehouse: type === stockTransaction_entity_1.TransactionType.TRANSFER && targetWarehouse
+                ? targetWarehouse
                 : undefined,
-            targetWarehouse: type === stockTransaction_entity_1.TransactionType.TRANSFER ? targetWarehouse : undefined,
         });
         return this.stockTransactionRepository.save(transaction);
     }
-    async getAllTransactions() {
+    async getAllTransactions(warehouseId) {
         return this.stockTransactionRepository.find({
+            where: [
+                { sourceWarehouse: { id: warehouseId } },
+                { targetWarehouse: { id: warehouseId } },
+            ],
             relations: ['sourceWarehouse', 'targetWarehouse', 'product', 'stock'],
         });
     }
-    async getAllStock() {
+    async getAllStock(warehouseId) {
         return this.stockRepository.find({
+            where: { warehouse: { id: warehouseId } },
             relations: ['product', 'warehouse'],
         });
     }

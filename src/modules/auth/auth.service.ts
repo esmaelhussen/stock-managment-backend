@@ -56,6 +56,7 @@ export class AuthService {
       lastName: user.lastName,
       roles,
       permissions,
+      warehouseId: user.warehouseId,
     };
 
     return {
@@ -67,6 +68,7 @@ export class AuthService {
         lastName: user.lastName,
         roles,
         permissions,
+        warehouseId: user.warehouseId,
       },
     };
   }

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from '../../entities/category.entity';
@@ -21,8 +25,11 @@ export class CategoriesService {
   }
 
   async create(data: Partial<Category>) {
-    const existing = await this.categoryRepository.findOneBy({ name: data.name });
-    if (existing) throw new ConflictException('A category with this name already exists.');
+    const existing = await this.categoryRepository.findOneBy({
+      name: data.name,
+    });
+    if (existing)
+      throw new ConflictException('A category with this name already exists.');
     const cat = this.categoryRepository.create(data);
     return this.categoryRepository.save(cat);
   }

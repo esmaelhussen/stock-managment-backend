@@ -23,7 +23,9 @@ let UnitsService = class UnitsService {
         this.unitRepository = unitRepository;
     }
     async create(createUnitDto) {
-        const existingUnit = await this.unitRepository.findOneBy({ name: createUnitDto.name });
+        const existingUnit = await this.unitRepository.findOneBy({
+            name: createUnitDto.name,
+        });
         if (existingUnit) {
             throw new common_1.ConflictException('Unit with this name already exists');
         }

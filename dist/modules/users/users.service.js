@@ -58,11 +58,16 @@ let UsersService = class UsersService {
     userRolesRepository;
     rolesRepository;
     async findOneByResetToken(token) {
-        return await this.usersRepository.findOne({ where: { resetPasswordToken: token } });
+        return await this.usersRepository.findOne({
+            where: { resetPasswordToken: token },
+        });
     }
     async changePassword(id, changePasswordDto) {
         const { oldPassword, newPassword } = changePasswordDto;
-        const user = await this.usersRepository.findOne({ where: { id }, select: ['id', 'password'] });
+        const user = await this.usersRepository.findOne({
+            where: { id },
+            select: ['id', 'password'],
+        });
         if (!user) {
             throw new common_1.NotFoundException('User not found');
         }

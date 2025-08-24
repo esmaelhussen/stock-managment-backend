@@ -46,6 +46,7 @@ exports.User = void 0;
 const typeorm_1 = require("typeorm");
 const bcrypt = __importStar(require("bcrypt"));
 const user_role_entity_1 = require("./user-role.entity");
+const warehouse_entity_1 = require("./warehouse.entity");
 let User = class User {
     id;
     firstName;
@@ -56,6 +57,8 @@ let User = class User {
     address;
     password;
     isActive;
+    warehouse;
+    warehouseId;
     userRoles;
     createdAt;
     updatedAt;
@@ -107,6 +110,15 @@ __decorate([
     (0, typeorm_1.Column)({ default: true }),
     __metadata("design:type", Boolean)
 ], User.prototype, "isActive", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => warehouse_entity_1.Warehouse, { eager: true }),
+    (0, typeorm_1.JoinColumn)({ name: 'warehouse_id' }),
+    __metadata("design:type", warehouse_entity_1.Warehouse)
+], User.prototype, "warehouse", void 0);
+__decorate([
+    (0, typeorm_1.Column)({ name: 'warehouse_id', nullable: true }),
+    __metadata("design:type", String)
+], User.prototype, "warehouseId", void 0);
 __decorate([
     (0, typeorm_1.OneToMany)(() => user_role_entity_1.UserRole, (userRole) => userRole.user, { eager: true }),
     __metadata("design:type", Array)

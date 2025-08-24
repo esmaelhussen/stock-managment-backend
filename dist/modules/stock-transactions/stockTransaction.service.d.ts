@@ -10,6 +10,6 @@ export declare class StockTransactionService {
     private readonly productRepository;
     constructor(stockTransactionRepository: Repository<StockTransaction>, stockRepository: Repository<Stock>, warehouseRepository: Repository<Warehouse>, productRepository: Repository<Product>);
     handleTransaction(productId: string, quantity: number, type: TransactionType, sourceWarehouseId: string, targetWarehouseId?: string): Promise<StockTransaction>;
-    getAllTransactions(): Promise<StockTransaction[]>;
-    getAllStock(): Promise<Stock[]>;
+    getAllTransactions(warehouseId: string): Promise<StockTransaction[]>;
+    getAllStock(warehouseId: string): Promise<Stock[]>;
 }

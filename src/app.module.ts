@@ -16,6 +16,7 @@ import { WarehouseModule } from './modules/warehouse/warehouse.module';
 import { UnitsModule } from './modules/units/units.module';
 import { ProductsModule } from './modules/products/products.module';
 import { StockTransactionModule } from './modules/stock-transactions/stockTransaction.module';
+import { StockModule } from './modules/stock/stock.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { StockTransactionModule } from './modules/stock-transactions/stockTransa
     UnitsModule,
     ProductsModule,
     StockTransactionModule,
+    StockModule,
   ],
   controllers: [AppController],
   providers: [

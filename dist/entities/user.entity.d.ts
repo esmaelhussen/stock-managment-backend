@@ -1,4 +1,5 @@
 import { UserRole } from './user-role.entity';
+import { Warehouse } from './warehouse.entity';
 export declare class User {
     id: string;
     firstName: string;
@@ -9,6 +10,8 @@ export declare class User {
     address: string;
     password: string;
     isActive: boolean;
+    warehouse: Warehouse;
+    warehouseId: string;
     userRoles: UserRole[];
     createdAt: Date;
     updatedAt: Date;

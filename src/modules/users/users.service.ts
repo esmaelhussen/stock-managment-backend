@@ -17,11 +17,19 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UsersService {
   async findOneByResetToken(token: string): Promise<User | null> {
-    return await this.usersRepository.findOne({ where: { resetPasswordToken: token } });
+    return await this.usersRepository.findOne({
+      where: { resetPasswordToken: token },
+    });
   }
-  async changePassword(id: string, changePasswordDto: ChangePasswordDto): Promise<{ message: string }> {
+  async changePassword(
+    id: string,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
     const { oldPassword, newPassword } = changePasswordDto;
-    const user = await this.usersRepository.findOne({ where: { id }, select: ['id', 'password'] });
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      select: ['id', 'password'],
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }

@@ -77,6 +77,7 @@ let AuthService = class AuthService {
             lastName: user.lastName,
             roles,
             permissions,
+            warehouseId: user.warehouseId,
         };
         return {
             access_token: this.jwtService.sign(payload),
@@ -87,6 +88,7 @@ let AuthService = class AuthService {
                 lastName: user.lastName,
                 roles,
                 permissions,
+                warehouseId: user.warehouseId,
             },
         };
     }
