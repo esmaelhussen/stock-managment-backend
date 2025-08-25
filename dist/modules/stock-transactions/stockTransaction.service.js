@@ -20,18 +20,21 @@ const stockTransaction_entity_1 = require("../../entities/stockTransaction.entit
 const stock_entity_1 = require("../../entities/stock.entity");
 const warehouse_entity_1 = require("../../entities/warehouse.entity");
 const product_entity_1 = require("../../entities/product.entity");
+const user_entity_1 = require("../../entities/user.entity");
 let StockTransactionService = class StockTransactionService {
     stockTransactionRepository;
     stockRepository;
+    userRepository;
     warehouseRepository;
     productRepository;
-    constructor(stockTransactionRepository, stockRepository, warehouseRepository, productRepository) {
+    constructor(stockTransactionRepository, stockRepository, userRepository, warehouseRepository, productRepository) {
         this.stockTransactionRepository = stockTransactionRepository;
         this.stockRepository = stockRepository;
+        this.userRepository = userRepository;
         this.warehouseRepository = warehouseRepository;
         this.productRepository = productRepository;
     }
-    async handleTransaction(productId, quantity, type, sourceWarehouseId, targetWarehouseId) {
+    async handleTransaction(productId, quantity, type, sourceWarehouseId, targetWarehouseId, transactedById) {
         const product = await this.productRepository.findOne({
             where: { id: productId },
         });
@@ -40,6 +43,11 @@ let StockTransactionService = class StockTransactionService {
         if (product.price === null || product.price === undefined) {
             throw new common_1.BadRequestException('Product price is not set');
         }
+        const transactedBy = await this.userRepository.findOne({
+            where: { id: transactedById },
+        });
+        if (!transactedBy)
+            throw new common_1.BadRequestException('User not found');
         const sourceWarehouse = await this.warehouseRepository.findOne({
             where: { id: sourceWarehouseId },
         });
@@ -53,6 +61,9 @@ let StockTransactionService = class StockTransactionService {
             if (!warehouse)
                 throw new common_1.BadRequestException('Target warehouse not found');
             targetWarehouse = warehouse;
+        }
+        if (!transactedById) {
+            throw new common_1.BadRequestException('Transacted by user is required');
         }
         if (type === stockTransaction_entity_1.TransactionType.ADD) {
             let stock = await this.stockRepository.findOne({
@@ -140,6 +151,7 @@ let StockTransactionService = class StockTransactionService {
             targetWarehouse: type === stockTransaction_entity_1.TransactionType.TRANSFER && targetWarehouse
                 ? targetWarehouse
                 : undefined,
+            transactedBy,
         });
         return this.stockTransactionRepository.save(transaction);
     }
@@ -149,7 +161,13 @@ let StockTransactionService = class StockTransactionService {
                 { sourceWarehouse: { id: warehouseId } },
                 { targetWarehouse: { id: warehouseId } },
             ],
-            relations: ['sourceWarehouse', 'targetWarehouse', 'product', 'stock'],
+            relations: [
+                'sourceWarehouse',
+                'targetWarehouse',
+                'product',
+                'stock',
+                'transactedBy',
+            ],
         });
     }
     async getAllStock(warehouseId) {
@@ -164,9 +182,11 @@ exports.StockTransactionService = StockTransactionService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(stockTransaction_entity_1.StockTransaction)),
     __param(1, (0, typeorm_1.InjectRepository)(stock_entity_1.Stock)),
-    __param(2, (0, typeorm_1.InjectRepository)(warehouse_entity_1.Warehouse)),
-    __param(3, (0, typeorm_1.InjectRepository)(product_entity_1.Product)),
+    __param(2, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
+    __param(3, (0, typeorm_1.InjectRepository)(warehouse_entity_1.Warehouse)),
+    __param(4, (0, typeorm_1.InjectRepository)(product_entity_1.Product)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])

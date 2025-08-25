@@ -17,7 +17,7 @@ export declare class AuthController {
             lastName: string;
             roles: string[];
             permissions: string[];
-            warehouseId: string;
+            warehouse: import("../../entities/warehouse.entity").Warehouse | null;
         };
     }>;
     register(createUserDto: CreateUserDto): Promise<import("../../entities/user.entity").User>;

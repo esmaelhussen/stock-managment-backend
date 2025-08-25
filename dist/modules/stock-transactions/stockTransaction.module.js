@@ -13,6 +13,7 @@ const stockTransaction_entity_1 = require("../../entities/stockTransaction.entit
 const stock_entity_1 = require("../../entities/stock.entity");
 const warehouse_entity_1 = require("../../entities/warehouse.entity");
 const product_entity_1 = require("../../entities/product.entity");
+const user_entity_1 = require("../../entities/user.entity");
 const stockTransaction_service_1 = require("./stockTransaction.service");
 const stockTransaction_controller_1 = require("./stockTransaction.controller");
 let StockTransactionModule = class StockTransactionModule {
@@ -21,7 +22,13 @@ exports.StockTransactionModule = StockTransactionModule;
 exports.StockTransactionModule = StockTransactionModule = __decorate([
     (0, common_1.Module)({
         imports: [
-            typeorm_1.TypeOrmModule.forFeature([stockTransaction_entity_1.StockTransaction, stock_entity_1.Stock, warehouse_entity_1.Warehouse, product_entity_1.Product]),
+            typeorm_1.TypeOrmModule.forFeature([
+                stockTransaction_entity_1.StockTransaction,
+                stock_entity_1.Stock,
+                warehouse_entity_1.Warehouse,
+                product_entity_1.Product,
+                user_entity_1.User,
+            ]),
         ],
         providers: [stockTransaction_service_1.StockTransactionService],
         controllers: [stockTransaction_controller_1.StockTransactionController],

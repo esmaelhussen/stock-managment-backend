@@ -8,6 +8,7 @@ import {
 import { Stock } from '../../entities/stock.entity';
 import { Warehouse } from '../../entities/warehouse.entity';
 import { Product } from '../../entities/product.entity';
+import { User } from 'src/entities/user.entity';
 
 @Injectable()
 export class StockTransactionService {
@@ -17,6 +18,9 @@ export class StockTransactionService {
 
     @InjectRepository(Stock)
     private readonly stockRepository: Repository<Stock>,
+
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
 
     @InjectRepository(Warehouse)
     private readonly warehouseRepository: Repository<Warehouse>,
@@ -31,6 +35,7 @@ export class StockTransactionService {
     type: TransactionType, // Updated to use TransactionType enum
     sourceWarehouseId: string,
     targetWarehouseId?: string,
+    transactedById?: string,
   ): Promise<StockTransaction> {
     // Fetch the product by its ID
     const product = await this.productRepository.findOne({
@@ -42,6 +47,11 @@ export class StockTransactionService {
     if (product.price === null || product.price === undefined) {
       throw new BadRequestException('Product price is not set');
     }
+
+    const transactedBy = await this.userRepository.findOne({
+      where: { id: transactedById },
+    });
+    if (!transactedBy) throw new BadRequestException('User not found');
 
     // Fetch the source warehouse by its ID
     const sourceWarehouse = await this.warehouseRepository.findOne({
@@ -58,6 +68,9 @@ export class StockTransactionService {
       if (!warehouse)
         throw new BadRequestException('Target warehouse not found');
       targetWarehouse = warehouse;
+    }
+    if (!transactedById) {
+      throw new BadRequestException('Transacted by user is required');
     }
 
     // Calculate price based on transaction type
@@ -83,7 +96,9 @@ export class StockTransactionService {
           warehouse: sourceWarehouse,
           product,
           quantity,
-          price: product.price, // Use product price directly for new stock
+          price: product.price,
+
+          // Use product price directly for new stock
         });
       }
 
@@ -170,6 +185,7 @@ export class StockTransactionService {
         type === TransactionType.TRANSFER && targetWarehouse
           ? targetWarehouse
           : undefined,
+      transactedBy,
     });
 
     // Save the transaction record
@@ -191,7 +207,13 @@ export class StockTransactionService {
         { sourceWarehouse: { id: warehouseId } },
         { targetWarehouse: { id: warehouseId } },
       ],
-      relations: ['sourceWarehouse', 'targetWarehouse', 'product', 'stock'],
+      relations: [
+        'sourceWarehouse',
+        'targetWarehouse',
+        'product',
+        'stock',
+        'transactedBy',
+      ],
     });
   }
 

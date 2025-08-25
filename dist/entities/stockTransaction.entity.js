@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StockTransaction = exports.TransactionType = void 0;
 const typeorm_1 = require("typeorm");
 const stock_entity_1 = require("./stock.entity");
+const user_entity_1 = require("./user.entity");
 const warehouse_entity_1 = require("./warehouse.entity");
 const product_entity_1 = require("./product.entity");
 var TransactionType;
@@ -30,6 +31,7 @@ let StockTransaction = class StockTransaction {
     price;
     type;
     timestamp;
+    transactedBy;
 };
 exports.StockTransaction = StockTransaction;
 __decorate([
@@ -71,6 +73,10 @@ __decorate([
     (0, typeorm_1.CreateDateColumn)(),
     __metadata("design:type", Date)
 ], StockTransaction.prototype, "timestamp", void 0);
+__decorate([
+    (0, typeorm_1.ManyToOne)(() => user_entity_1.User, { nullable: false }),
+    __metadata("design:type", user_entity_1.User)
+], StockTransaction.prototype, "transactedBy", void 0);
 exports.StockTransaction = StockTransaction = __decorate([
     (0, typeorm_1.Entity)()
 ], StockTransaction);

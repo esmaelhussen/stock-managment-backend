@@ -37,4 +37,8 @@ export class CreateStockTransactionDto {
   @IsUUID()
   @IsNotEmpty()
   targetWarehouseId?: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  transactedById: string;
 }

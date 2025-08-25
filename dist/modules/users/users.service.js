@@ -52,11 +52,13 @@ const typeorm_2 = require("typeorm");
 const user_entity_1 = require("../../entities/user.entity");
 const user_role_entity_1 = require("../../entities/user-role.entity");
 const role_entity_1 = require("../../entities/role.entity");
+const warehouse_entity_1 = require("../../entities/warehouse.entity");
 const bcrypt = __importStar(require("bcrypt"));
 let UsersService = class UsersService {
     usersRepository;
     userRolesRepository;
     rolesRepository;
+    warehouseRepository;
     async findOneByResetToken(token) {
         return await this.usersRepository.findOne({
             where: { resetPasswordToken: token },
@@ -79,10 +81,11 @@ let UsersService = class UsersService {
         await this.usersRepository.update(id, { password: hashedPassword });
         return { message: 'Password changed successfully' };
     }
-    constructor(usersRepository, userRolesRepository, rolesRepository) {
+    constructor(usersRepository, userRolesRepository, rolesRepository, warehouseRepository) {
         this.usersRepository = usersRepository;
         this.userRolesRepository = userRolesRepository;
         this.rolesRepository = rolesRepository;
+        this.warehouseRepository = warehouseRepository;
     }
     async create(createUserDto) {
         const { roleIds, ...userData } = createUserDto;
@@ -91,6 +94,16 @@ let UsersService = class UsersService {
         });
         if (existingUser) {
             throw new common_1.ConflictException('User with this email or phone number already exists');
+        }
+        const roles = roleIds?.length
+            ? await this.rolesRepository.find({ where: { id: (0, typeorm_2.In)(roleIds) } })
+            : [];
+        const hasWarehouseRole = roles.some((role) => role.name.toLowerCase() === 'warehouse');
+        if (hasWarehouseRole && !createUserDto.warehouseId) {
+            throw new common_1.BadRequestException('Warehouse ID is required for warehouse role');
+        }
+        if (!hasWarehouseRole && createUserDto.warehouseId) {
+            throw new common_1.BadRequestException('Warehouse ID should not exist for non-warehouse roles');
         }
         const user = this.usersRepository.create(userData);
         const savedUser = await this.usersRepository.save(user);
@@ -125,7 +138,15 @@ let UsersService = class UsersService {
     async findByEmail(email) {
         const user = await this.usersRepository.findOne({
             where: { email },
-            select: ['id', 'email', 'password', 'firstName', 'lastName', 'isActive'],
+            select: [
+                'id',
+                'email',
+                'password',
+                'firstName',
+                'lastName',
+                'isActive',
+                'warehouseId',
+            ],
             relations: [
                 'userRoles',
                 'userRoles.role',
@@ -186,6 +207,17 @@ let UsersService = class UsersService {
         });
         return Array.from(permissions);
     }
+    async getWarehouse(warehouseId) {
+        console.log(`Fetching warehouse with ID: ${warehouseId}`);
+        const warehouse = await this.warehouseRepository.findOne({
+            where: { id: warehouseId },
+        });
+        if (!warehouse) {
+            console.error(`Warehouse with ID ${warehouseId} not found`);
+            throw new common_1.NotFoundException(`Warehouse with ID ${warehouseId} not found`);
+        }
+        return warehouse;
+    }
 };
 exports.UsersService = UsersService;
 exports.UsersService = UsersService = __decorate([
@@ -193,7 +225,9 @@ exports.UsersService = UsersService = __decorate([
     __param(0, (0, typeorm_1.InjectRepository)(user_entity_1.User)),
     __param(1, (0, typeorm_1.InjectRepository)(user_role_entity_1.UserRole)),
     __param(2, (0, typeorm_1.InjectRepository)(role_entity_1.Role)),
+    __param(3, (0, typeorm_1.InjectRepository)(warehouse_entity_1.Warehouse)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])
 ], UsersService);

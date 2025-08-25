@@ -18,6 +18,7 @@ class CreateStockTransactionDto {
     type;
     sourceWarehouseId;
     targetWarehouseId;
+    transactedById;
 }
 exports.CreateStockTransactionDto = CreateStockTransactionDto;
 __decorate([
@@ -49,4 +50,9 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateStockTransactionDto.prototype, "targetWarehouseId", void 0);
+__decorate([
+    (0, class_validator_1.IsUUID)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateStockTransactionDto.prototype, "transactedById", void 0);
 //# sourceMappingURL=create-stock-transaction.dto.js.map

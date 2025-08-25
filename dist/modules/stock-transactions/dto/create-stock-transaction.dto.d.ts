@@ -5,4 +5,5 @@ export declare class CreateStockTransactionDto {
     type: TransactionType;
     sourceWarehouseId: string;
     targetWarehouseId?: string;
+    transactedById: string;
 }

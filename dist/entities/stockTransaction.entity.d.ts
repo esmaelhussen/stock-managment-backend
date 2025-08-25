@@ -1,4 +1,5 @@
 import { Stock } from './stock.entity';
+import { User } from './user.entity';
 import { Warehouse } from './warehouse.entity';
 import { Product } from './product.entity';
 export declare enum TransactionType {
@@ -16,4 +17,5 @@ export declare class StockTransaction {
     price: number;
     type: TransactionType;
     timestamp: Date;
+    transactedBy: User;
 }

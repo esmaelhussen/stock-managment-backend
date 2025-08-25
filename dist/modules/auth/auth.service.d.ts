@@ -16,7 +16,7 @@ export declare class AuthService {
             lastName: string;
             roles: string[];
             permissions: string[];
-            warehouseId: string;
+            warehouse: import("../../entities/warehouse.entity").Warehouse | null;
         };
     }>;
     validateUser(payload: any): Promise<import("../../entities/user.entity").User>;

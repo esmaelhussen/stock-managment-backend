@@ -50,4 +50,7 @@ export class StockTransaction {
 
   @CreateDateColumn()
   timestamp: Date;
+
+  @ManyToOne(() => User, { nullable: false })
+  transactedBy: User;
 }

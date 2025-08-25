@@ -9,6 +9,7 @@ import { Repository, In } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { UserRole } from '../../entities/user-role.entity';
 import { Role } from '../../entities/role.entity';
+import { Warehouse } from '../../entities/warehouse.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -48,6 +49,8 @@ export class UsersService {
     private userRolesRepository: Repository<UserRole>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    @InjectRepository(Warehouse)
+    private warehouseRepository: Repository<Warehouse>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -60,6 +63,25 @@ export class UsersService {
     if (existingUser) {
       throw new ConflictException(
         'User with this email or phone number already exists',
+      );
+    }
+
+    const roles = roleIds?.length
+      ? await this.rolesRepository.find({ where: { id: In(roleIds) } })
+      : [];
+    const hasWarehouseRole = roles.some(
+      (role) => role.name.toLowerCase() === 'warehouse',
+    );
+
+    if (hasWarehouseRole && !createUserDto.warehouseId) {
+      throw new BadRequestException(
+        'Warehouse ID is required for warehouse role',
+      );
+    }
+
+    if (!hasWarehouseRole && createUserDto.warehouseId) {
+      throw new BadRequestException(
+        'Warehouse ID should not exist for non-warehouse roles',
       );
     }
 
@@ -103,7 +125,15 @@ export class UsersService {
   async findByEmail(email: string): Promise<User | null> {
     const user = await this.usersRepository.findOne({
       where: { email },
-      select: ['id', 'email', 'password', 'firstName', 'lastName', 'isActive'],
+      select: [
+        'id',
+        'email',
+        'password',
+        'firstName',
+        'lastName',
+        'isActive',
+        'warehouseId',
+      ],
       relations: [
         'userRoles',
         'userRoles.role',
@@ -180,5 +210,20 @@ export class UsersService {
     });
 
     return Array.from(permissions);
+  }
+
+  async getWarehouse(warehouseId: string) {
+    console.log(`Fetching warehouse with ID: ${warehouseId}`);
+
+    const warehouse = await this.warehouseRepository.findOne({
+      where: { id: warehouseId },
+    }); // Removed unnecessary relations
+
+    if (!warehouse) {
+      console.error(`Warehouse with ID ${warehouseId} not found`);
+      throw new NotFoundException(`Warehouse with ID ${warehouseId} not found`);
+    }
+
+    return warehouse;
   }
 }

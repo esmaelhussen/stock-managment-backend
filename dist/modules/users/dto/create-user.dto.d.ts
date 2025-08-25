@@ -7,4 +7,5 @@ export declare class CreateUserDto {
     address?: string;
     password: string;
     roleIds?: string[];
+    warehouseId?: string;
 }
