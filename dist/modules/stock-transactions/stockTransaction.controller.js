@@ -25,7 +25,7 @@ let StockTransactionController = class StockTransactionController {
         this.stockTransactionService = stockTransactionService;
     }
     create(createStockTransactionDto, user) {
-        return this.stockTransactionService.handleTransaction(createStockTransactionDto.productId, createStockTransactionDto.quantity, createStockTransactionDto.type, user.warehouseId, createStockTransactionDto.targetWarehouseId, createStockTransactionDto.transactedById);
+        return this.stockTransactionService.handleTransaction(createStockTransactionDto.productId, createStockTransactionDto.quantity, createStockTransactionDto.type, createStockTransactionDto.sourceWarehouseId, createStockTransactionDto.targetWarehouseId, createStockTransactionDto.transactedById);
     }
     async getAllTransactions(user) {
         return this.stockTransactionService.getAllTransactions(user.warehouseId);

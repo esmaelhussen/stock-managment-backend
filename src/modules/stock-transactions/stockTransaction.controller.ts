@@ -21,7 +21,7 @@ export class StockTransactionController {
       createStockTransactionDto.productId,
       createStockTransactionDto.quantity,
       createStockTransactionDto.type, // Correctly cast type
-      user.warehouseId, // Use user's warehouseId as source
+      createStockTransactionDto.sourceWarehouseId, // Use user's warehouseId as source
       createStockTransactionDto.targetWarehouseId,
       createStockTransactionDto.transactedById,
     );

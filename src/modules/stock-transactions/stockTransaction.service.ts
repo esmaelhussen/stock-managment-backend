@@ -85,18 +85,18 @@ export class StockTransactionService {
 
       if (stock) {
         // Update stock quantity and calculate weighted average price
-        const totalValue =
-          stock.quantity * stock.price + quantity * product.price;
-        const totalQuantity = stock.quantity + quantity;
-        stock.price = totalValue / totalQuantity;
-        stock.quantity = totalQuantity;
+
+        stock.price = Number(stock.price);
+        product.price = Number(product.price);
+        stock.price += quantity * product.price;
+        stock.quantity += quantity;
       } else {
         // Create new stock record
         stock = this.stockRepository.create({
           warehouse: sourceWarehouse,
           product,
           quantity,
-          price: product.price,
+          price: quantity * product.price,
 
           // Use product price directly for new stock
         });
@@ -117,6 +117,9 @@ export class StockTransactionService {
 
       // Reduce stock quantity (price per unit remains the same)
       stock.quantity -= quantity;
+      // stock.price = Number(stock.price);
+      // product.price = Number(product.price);
+      stock.price -= quantity * product.price;
       await this.stockRepository.save(stock);
     } else if (type === TransactionType.TRANSFER) {
       if (!targetWarehouseId) {
@@ -138,12 +141,16 @@ export class StockTransactionService {
         },
       });
 
-      if (!sourceStock || sourceStock.quantity < quantity) {
+      if (
+        !sourceStock ||
+        sourceStock.quantity < quantity ||
+        sourceStock.price <= 0
+      ) {
         throw new BadRequestException('Insufficient stock to transfer');
       }
 
       // Reduce source stock quantity (price per unit remains the same)
-      const transferPrice = sourceStock.price || product.price; // Keep track of source price
+      sourceStock.price -= quantity * product.price; // Keep track of source price
       sourceStock.quantity -= quantity;
       await this.stockRepository.save(sourceStock);
 
@@ -156,18 +163,18 @@ export class StockTransactionService {
 
       if (targetStock) {
         // Update target stock quantity and calculate weighted average price
-        const totalValue =
-          targetStock.quantity * targetStock.price + quantity * transferPrice;
-        const totalQuantity = targetStock.quantity + quantity;
-        targetStock.price = totalValue / totalQuantity;
-        targetStock.quantity = totalQuantity;
+        targetStock.price = Number(targetStock.price);
+        product.price = Number(product.price);
+
+        targetStock.price += quantity * product.price;
+        targetStock.quantity += quantity;
       } else {
         // Create new stock record
         targetStock = this.stockRepository.create({
           warehouse: targetWarehouse!,
           product,
           quantity,
-          price: transferPrice, // Use transfer price from source
+          price: quantity * product.price, // Use transfer price from source
         });
       }
 
@@ -178,7 +185,7 @@ export class StockTransactionService {
     const transaction = this.stockTransactionRepository.create({
       product,
       quantity,
-      price: product.price, // Store unit price, not total
+      price: product.price * quantity, // Store unit price, not total
       type,
       sourceWarehouse,
       targetWarehouse:

@@ -25,7 +25,6 @@ const warehouse_module_1 = require("./modules/warehouse/warehouse.module");
 const units_module_1 = require("./modules/units/units.module");
 const products_module_1 = require("./modules/products/products.module");
 const stockTransaction_module_1 = require("./modules/stock-transactions/stockTransaction.module");
-const stock_module_1 = require("./modules/stock/stock.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -59,7 +58,6 @@ exports.AppModule = AppModule = __decorate([
             units_module_1.UnitsModule,
             products_module_1.ProductsModule,
             stockTransaction_module_1.StockTransactionModule,
-            stock_module_1.StockModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [
