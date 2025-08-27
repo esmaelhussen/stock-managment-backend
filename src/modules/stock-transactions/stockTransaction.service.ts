@@ -9,6 +9,7 @@ import { Stock } from '../../entities/stock.entity';
 import { Warehouse } from '../../entities/warehouse.entity';
 import { Product } from '../../entities/product.entity';
 import { User } from 'src/entities/user.entity';
+import { Shop } from '../../entities/shop.entity';
 
 @Injectable()
 export class StockTransactionService {
@@ -27,6 +28,9 @@ export class StockTransactionService {
 
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+
+    @InjectRepository(Shop)
+    private readonly shopRepository: Repository<Shop>,
   ) {}
 
   async handleTransaction(
@@ -196,6 +200,74 @@ export class StockTransactionService {
     });
 
     // Save the transaction record
+    return this.stockTransactionRepository.save(transaction);
+  }
+
+  async transferToShop(
+    productId: string,
+    quantity: number,
+    warehouseId: string,
+    shopId: string,
+    transactedById: string,
+  ): Promise<StockTransaction> {
+    const warehouse = await this.warehouseRepository.findOne({
+      where: { id: warehouseId },
+    });
+    const shop = await this.shopRepository.findOne({ where: { id: shopId } });
+    const product = await this.productRepository.findOne({
+      where: { id: productId },
+    });
+    const transactedBy = await this.userRepository.findOne({
+      where: { id: transactedById },
+    });
+
+    if (!warehouse || !shop || !product || !transactedBy) {
+      throw new BadRequestException('Invalid warehouse, shop, product, or user');
+    }
+
+    const stock = await this.stockRepository.findOne({
+      where: { warehouse: { id: warehouseId }, product: { id: productId } },
+    });
+
+    if (!stock || stock.quantity < quantity) {
+      throw new BadRequestException('Insufficient stock in warehouse');
+    }
+
+    stock.quantity -= quantity;
+    await this.stockRepository.save(stock);
+
+    let shopStock = await this.stockRepository.findOne({
+      where: { shop: { id: shopId }, product: { id: productId } },
+    });
+
+    if (shopStock) {
+      // Update shop stock quantity and calculate weighted average price
+      shopStock.price =
+        (shopStock.price * shopStock.quantity + product.price * quantity) /
+        (shopStock.quantity + quantity);
+      shopStock.quantity += quantity;
+    } else {
+      // Create new shop stock record
+      shopStock = this.stockRepository.create({
+        shop,
+        product,
+        quantity,
+        price: product.price, // Use product price for new stock
+      });
+    }
+
+    await this.stockRepository.save(shopStock);
+
+    const transaction = this.stockTransactionRepository.create({
+      product,
+      quantity,
+      price: product.price * quantity, // Store total price for the transaction
+      type: TransactionType.TRANSFER,
+      sourceWarehouse: warehouse,
+      shop,
+      transactedBy,
+    });
+
     return this.stockTransactionRepository.save(transaction);
   }
 

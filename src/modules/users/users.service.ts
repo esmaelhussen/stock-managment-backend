@@ -10,6 +10,7 @@ import { User } from '../../entities/user.entity';
 import { UserRole } from '../../entities/user-role.entity';
 import { Role } from '../../entities/role.entity';
 import { Warehouse } from '../../entities/warehouse.entity';
+import { Shop } from 'src/entities/shop.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -51,6 +52,8 @@ export class UsersService {
     private rolesRepository: Repository<Role>,
     @InjectRepository(Warehouse)
     private warehouseRepository: Repository<Warehouse>,
+    @InjectRepository(Shop)
+    private shopRepository: Repository<Shop>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -69,20 +72,47 @@ export class UsersService {
     const roles = roleIds?.length
       ? await this.rolesRepository.find({ where: { id: In(roleIds) } })
       : [];
+
     const hasWarehouseRole = roles.some(
       (role) => role.name.toLowerCase() === 'warehouse',
     );
 
+    const hasShopRole = roles.some(
+      (role) => role.name.toLowerCase() === 'shop',
+    );
+
+    // Validate warehouseId for warehouse or shop roles
     if (hasWarehouseRole && !createUserDto.warehouseId) {
       throw new BadRequestException(
-        'Warehouse ID is required for warehouse role',
+        'Warehouse ID is required for warehouse or shop role',
       );
     }
 
-    if (!hasWarehouseRole && createUserDto.warehouseId) {
+    // Validate warehouseId should not exist for non-warehouse/shop roles
+    if (!hasWarehouseRole && !hasShopRole && createUserDto.warehouseId) {
       throw new BadRequestException(
-        'Warehouse ID should not exist for non-warehouse roles',
+        'Warehouse ID should not exist for non-warehouse/shop roles',
       );
+    }
+
+    // Validate shopId if user has shop role
+    if (hasShopRole && !createUserDto.shopId) {
+      throw new BadRequestException('Shop ID is required for shop role');
+    }
+
+    // Validate shopId should not exist for non-shop roles
+    if (!hasShopRole && createUserDto.shopId) {
+      throw new BadRequestException(
+        'Shop ID should not exist for non-shop roles',
+      );
+    }
+
+    // Optional: Validate that shop belongs to warehouse
+    if (hasShopRole) {
+      const shop = await this.shopRepository.findOne({
+        where: { id: createUserDto.shopId },
+        relations: ['warehouse'],
+      });
     }
 
     const user = this.usersRepository.create(userData);
@@ -133,6 +163,7 @@ export class UsersService {
         'lastName',
         'isActive',
         'warehouseId',
+        'shopId',
       ],
       relations: [
         'userRoles',

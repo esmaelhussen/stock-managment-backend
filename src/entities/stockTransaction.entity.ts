@@ -9,6 +9,7 @@ import { Stock } from './stock.entity';
 import { User } from './user.entity';
 import { Warehouse } from './warehouse.entity';
 import { Product } from './product.entity';
+import { Shop } from './shop.entity';
 
 // ✅ Declare TransactionType enum
 export enum TransactionType {
@@ -53,4 +54,7 @@ export class StockTransaction {
 
   @ManyToOne(() => User, { nullable: false })
   transactedBy: User;
+
+  @ManyToOne(() => Shop, { nullable: true })
+  shop: Shop;
 }

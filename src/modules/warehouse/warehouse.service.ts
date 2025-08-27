@@ -52,4 +52,17 @@ export class WarehouseService {
     }
     return this.warehouseRepository.delete(id);
   }
+
+  async getShopsInWarehouse(id: string) {
+    const warehouse = await this.warehouseRepository.findOne({
+      where: { id },
+      relations: ['shops'],
+    });
+
+    if (!warehouse) {
+      throw new NotFoundException('Warehouse not found.');
+    }
+
+    return warehouse.shops;
+  }
 }

@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Shop } from './shop.entity';
 
 @Entity()
 export class Warehouse {
@@ -13,4 +14,7 @@ export class Warehouse {
 
   @Column({ nullable: true })
   description: string;
+
+  @OneToMany(() => Shop, (shop) => shop.warehouse)
+  shops: Shop[]; // Added relationship to link shops to a warehouse
 }

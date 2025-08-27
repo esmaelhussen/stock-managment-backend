@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { Product } from './product.entity';
 import { Warehouse } from './warehouse.entity';
+import { Shop } from './shop.entity';
 
 @Entity()
 export class Stock {
@@ -18,6 +19,9 @@ export class Stock {
 
   @ManyToOne(() => Warehouse, (warehouse) => warehouse.id)
   warehouse: Warehouse;
+
+  @ManyToOne(() => Shop, { nullable: true })
+  shop: Shop; // Added relationship to link stock to a shop
 
   @Column({ nullable: false })
   quantity: number;

@@ -47,4 +47,8 @@ export class CreateUserDto {
   @IsOptional()
   @IsUUID()
   warehouseId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  shopId?: string;
 }

@@ -13,6 +13,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { UserRole } from './user-role.entity';
 import { Warehouse } from './warehouse.entity';
+import { Shop } from './shop.entity';
 
 @Entity('users')
 export class User {
@@ -49,6 +50,13 @@ export class User {
 
   @Column({ name: 'warehouse_id', nullable: true })
   warehouseId: string;
+
+  @ManyToOne(() => Shop, { eager: true })
+  @JoinColumn({ name: 'shop_id' })
+  shop: Shop;
+
+  @Column({ name: 'shop_id', nullable: true })
+  shopId: string;
 
   @OneToMany(() => UserRole, (userRole) => userRole.user, { eager: true })
   userRoles: UserRole[];

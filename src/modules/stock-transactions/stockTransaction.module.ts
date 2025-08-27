@@ -5,6 +5,7 @@ import { Stock } from '../../entities/stock.entity';
 import { Warehouse } from '../../entities/warehouse.entity';
 import { Product } from '../../entities/product.entity';
 import { User } from 'src/entities/user.entity';
+import { Shop } from 'src/entities/shop.entity';
 import { StockTransactionService } from './stockTransaction.service';
 import { StockTransactionController } from './stockTransaction.controller';
 
@@ -16,6 +17,7 @@ import { StockTransactionController } from './stockTransaction.controller';
       Warehouse,
       Product,
       User,
+      Shop,
     ]),
   ],
   providers: [StockTransactionService],

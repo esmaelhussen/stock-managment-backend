@@ -43,4 +43,9 @@ export class WarehouseController {
   remove(@Param('id') id: string) {
     return this.warehouseService.remove(id);
   }
+
+  @Get(':id/shops')
+  getShops(@Param('id') id: string) {
+    return this.warehouseService.getShopsInWarehouse(id);
+  }
 }
