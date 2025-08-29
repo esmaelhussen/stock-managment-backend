@@ -55,6 +55,9 @@ export class AuthService {
     const warehouse = user.warehouseId
       ? await this.usersService.getWarehouse(user.warehouseId)
       : null;
+    const shop = user.shopId
+        ? await this.usersService.getShop(user.shopId)
+        : null;
 
     console.log(`Fetched warehouse:`, warehouse);
 
@@ -66,6 +69,7 @@ export class AuthService {
       roles,
       permissions,
       warehouse,
+      shop
     };
 
     return {
@@ -78,6 +82,7 @@ export class AuthService {
         roles,
         permissions,
         warehouse,
+        shop
       },
     };
   }

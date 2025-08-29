@@ -257,4 +257,18 @@ export class UsersService {
 
     return warehouse;
   }
+  async getShop(shopId: string) {
+    console.log(`Fetching shop with ID: ${shopId}`);
+
+    const shop = await this.shopRepository.findOne({
+      where: { id: shopId },
+    }); // Removed unnecessary relations
+
+    if (!shop) {
+      console.error(`shop with ID ${shopId} not found`);
+      throw new NotFoundException(`shop with ID ${shopId} not found`);
+    }
+
+    return shop;
+  }
 }
