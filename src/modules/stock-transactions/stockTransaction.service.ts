@@ -36,172 +36,180 @@ export class StockTransactionService {
   async handleTransaction(
     productId: string,
     quantity: number,
-    type: TransactionType, // Updated to use TransactionType enum
+    type: TransactionType,
     sourceWarehouseId?: string,
     targetWarehouseId?: string,
     sourceShopId?: string,
     targetShopId?: string,
     transactedById?: string,
   ): Promise<StockTransaction> {
-    // Fetch the product by its ID
     const product = await this.productRepository.findOne({
       where: { id: productId },
     });
     if (!product) throw new BadRequestException('Product not found');
-
-    // Ensure product price is valid
-    if (product.price === null || product.price === undefined) {
+    if (product.price == null)
       throw new BadRequestException('Product price is not set');
-    }
 
     const transactedBy = await this.userRepository.findOne({
       where: { id: transactedById },
     });
     if (!transactedBy) throw new BadRequestException('User not found');
 
-    // Fetch the source warehouse by its ID
-    const sourceWarehouse = await this.warehouseRepository.findOne({
-      where: { id: sourceWarehouseId },
-    });
-    if (!sourceWarehouse)
-      throw new BadRequestException('Source warehouse not found');
+    // Resolve source
+    const sourceWarehouse = sourceWarehouseId
+      ? await this.warehouseRepository.findOne({
+          where: { id: sourceWarehouseId },
+        })
+      : null;
+    const sourceShop = sourceShopId
+      ? await this.shopRepository.findOne({ where: { id: sourceShopId } })
+      : null;
 
-    let targetWarehouse: Warehouse | undefined = undefined;
-    if (type === TransactionType.TRANSFER && targetWarehouseId) {
-      const warehouse = await this.warehouseRepository.findOne({
-        where: { id: targetWarehouseId },
-      });
-      if (!warehouse)
-        throw new BadRequestException('Target warehouse not found');
-      targetWarehouse = warehouse;
-    }
-    if (!transactedById) {
-      throw new BadRequestException('Transacted by user is required');
+    if (!sourceWarehouse && !sourceShop) {
+      throw new BadRequestException('Source warehouse or shop not found');
     }
 
-    // Calculate price based on transaction type
+    // Resolve target (only required for TRANSFER)
+    const targetWarehouse = targetWarehouseId
+      ? await this.warehouseRepository.findOne({
+          where: { id: targetWarehouseId },
+        })
+      : null;
+    const targetShop = targetShopId
+      ? await this.shopRepository.findOne({ where: { id: targetShopId } })
+      : null;
 
+    if (type === TransactionType.TRANSFER && !targetWarehouse && !targetShop) {
+      throw new BadRequestException('Target warehouse or shop not found');
+    }
+
+    // -------------------------
+    // ADD stock
+    // -------------------------
     if (type === TransactionType.ADD) {
       let stock = await this.stockRepository.findOne({
-        where: {
-          warehouse: { id: sourceWarehouseId },
-          product: { id: productId },
-        },
+        where: sourceWarehouse
+          ? {
+              warehouse: { id: sourceWarehouse.id },
+              product: { id: productId },
+            }
+          : sourceShop
+            ? { shop: { id: sourceShop.id }, product: { id: productId } }
+            : undefined,
       });
 
       if (stock) {
-        // Update stock quantity and calculate weighted average price
-
+        stock.quantity = Number(stock.quantity);
         stock.price = Number(stock.price);
-        product.price = Number(product.price);
-        stock.price += quantity * product.price;
+
         stock.quantity += quantity;
+        stock.price += quantity * product.price;
       } else {
-        // Create new stock record
         stock = this.stockRepository.create({
-          warehouse: sourceWarehouse,
           product,
           quantity,
           price: quantity * product.price,
-
-          // Use product price directly for new stock
+          warehouse: sourceWarehouse ?? undefined,
+          shop: sourceShop ?? undefined,
         });
       }
-
       await this.stockRepository.save(stock);
-    } else if (type === TransactionType.REMOVE) {
+    }
+
+    // -------------------------
+    // REMOVE stock
+    // -------------------------
+    else if (type === TransactionType.REMOVE) {
       const stock = await this.stockRepository.findOne({
-        where: {
-          warehouse: { id: sourceWarehouseId },
-          product: { id: productId },
-        },
+        where: sourceWarehouse
+          ? {
+              warehouse: { id: sourceWarehouse.id },
+              product: { id: productId },
+            }
+          : sourceShop
+            ? { shop: { id: sourceShop.id }, product: { id: productId } }
+            : undefined,
       });
 
       if (!stock || stock.quantity < quantity) {
         throw new BadRequestException('Insufficient stock to remove');
       }
 
-      // Reduce stock quantity (price per unit remains the same)
       stock.quantity -= quantity;
-      // stock.price = Number(stock.price);
-      // product.price = Number(product.price);
       stock.price -= quantity * product.price;
       await this.stockRepository.save(stock);
-    } else if (type === TransactionType.TRANSFER) {
-      if (!targetWarehouseId) {
-        throw new BadRequestException(
-          'Target warehouse is required for transfer',
-        );
-      }
+    }
 
-      if (sourceWarehouseId === targetWarehouseId) {
-        throw new BadRequestException(
-          'Source and target warehouse cannot be the same',
-        );
-      }
-
+    // -------------------------
+    // TRANSFER stock
+    // -------------------------
+    else if (type === TransactionType.TRANSFER) {
+      // Fetch source stock
       const sourceStock = await this.stockRepository.findOne({
-        where: {
-          warehouse: { id: sourceWarehouseId },
-          product: { id: productId },
-        },
+        where: sourceWarehouse
+          ? {
+              warehouse: { id: sourceWarehouse.id },
+              product: { id: productId },
+            }
+          : sourceShop
+            ? { shop: { id: sourceShop.id }, product: { id: productId } }
+            : undefined,
       });
 
-      if (
-        !sourceStock ||
-        sourceStock.quantity < quantity ||
-        sourceStock.price <= 0
-      ) {
+      if (!sourceStock || sourceStock.quantity < quantity) {
         throw new BadRequestException('Insufficient stock to transfer');
       }
 
-      // Reduce source stock quantity (price per unit remains the same)
-      sourceStock.price -= quantity * product.price; // Keep track of source price
       sourceStock.quantity -= quantity;
+      sourceStock.price -= quantity * product.price;
       await this.stockRepository.save(sourceStock);
 
+      // Fetch/Create target stock
       let targetStock = await this.stockRepository.findOne({
-        where: {
-          warehouse: { id: targetWarehouseId },
-          product: { id: productId },
-        },
+        where: targetWarehouse
+          ? {
+              warehouse: { id: targetWarehouse.id },
+              product: { id: productId },
+            }
+          : targetShop
+            ? { shop: { id: targetShop.id }, product: { id: productId } }
+            : undefined,
       });
 
       if (targetStock) {
-        // Update target stock quantity and calculate weighted average price
+        targetStock.quantity = Number(targetStock.quantity);
         targetStock.price = Number(targetStock.price);
-        product.price = Number(product.price);
 
-        targetStock.price += quantity * product.price;
         targetStock.quantity += quantity;
+        targetStock.price += quantity * product.price;
       } else {
-        // Create new stock record
         targetStock = this.stockRepository.create({
-          warehouse: targetWarehouse!,
           product,
           quantity,
-          price: quantity * product.price, // Use transfer price from source
+          price: quantity * product.price,
+          warehouse: targetWarehouse ?? undefined,
+          shop: targetShop ?? undefined,
         });
       }
-
       await this.stockRepository.save(targetStock);
     }
 
-    // Log the transaction in the StockTransaction table
-    const transaction = this.stockTransactionRepository.create({
+    // -------------------------
+    // Log transaction
+    // -------------------------
+    const transaction = new StockTransaction();
+    Object.assign(transaction, {
       product,
       quantity,
-      price: product.price * quantity, // Store unit price, not total
+      price: product.price * quantity,
       type,
       sourceWarehouse,
-      targetWarehouse:
-        type === TransactionType.TRANSFER && targetWarehouse
-          ? targetWarehouse
-          : undefined,
+      sourceShop,
+      targetWarehouse,
+      targetShop,
       transactedBy,
     });
 
-    // Save the transaction record
     return this.stockTransactionRepository.save(transaction);
   }
 
@@ -209,9 +217,10 @@ export class StockTransactionService {
   //   productId: string,
   //   quantity: number,
   //   warehouseId: string,
+
   //   shopId: string,
   //   transactedById: string,
-  // ): Promise<StockTransaction> {
+  // ): Promise<StockTransaction> {a
   //   const warehouse = await this.warehouseRepository.findOne({
   //     where: { id: warehouseId },
   //   });
@@ -292,7 +301,6 @@ export class StockTransactionService {
         'sourceWarehouse',
         'targetWarehouse',
         'product',
-        'stock',
         'transactedBy',
       ],
     });

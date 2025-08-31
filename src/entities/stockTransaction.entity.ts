@@ -27,12 +27,18 @@ export class StockTransaction {
   stock: Stock;
 
   // ✅ Source warehouse (where stock is removed)
-  @ManyToOne(() => Warehouse, { nullable: true })
-  sourceWarehouse: Warehouse;
+  @ManyToOne(() => Warehouse, { nullable: true, eager: true })
+  sourceWarehouse?: Warehouse;
 
   // ✅ Target warehouse (where stock is added)
-  @ManyToOne(() => Warehouse, { nullable: true })
-  targetWarehouse: Warehouse;
+  @ManyToOne(() => Warehouse, { nullable: true, eager: true })
+  targetWarehouse?: Warehouse;
+
+  @ManyToOne(() => Shop, { nullable: true, eager: true })
+  sourceShop?: Shop;
+  //
+  @ManyToOne(() => Shop, { nullable: true, eager: true })
+  targetShop?: Shop;
 
   @ManyToOne(() => Product)
   product: Product;
@@ -54,7 +60,4 @@ export class StockTransaction {
 
   @ManyToOne(() => User, { nullable: false })
   transactedBy: User;
-
-  @ManyToOne(() => Shop, { nullable: true })
-  shop: Shop;
 }

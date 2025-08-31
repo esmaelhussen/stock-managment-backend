@@ -8,6 +8,7 @@ import {
   ValidationArguments,
   ValidatorConstraint,
   ValidatorConstraintInterface,
+  IsOptional,
 } from 'class-validator';
 import { TransactionType } from '../../../entities/stockTransaction.entity';
 
@@ -49,6 +50,7 @@ export class CreateStockTransactionDto {
       o.type === TransactionType.TRANSFER,
   )
   @IsUUID()
+  @IsOptional()
   @Validate(OnlyOneDefinedConstraint, ['sourceShopId'])
   sourceWarehouseId?: string;
 
@@ -59,17 +61,20 @@ export class CreateStockTransactionDto {
       o.type === TransactionType.TRANSFER,
   )
   @IsUUID()
+  @IsOptional()
   @Validate(OnlyOneDefinedConstraint, ['sourceWarehouseId'])
   sourceShopId?: string;
 
   // Target (only for transfer)
   @ValidateIf((o) => o.type === TransactionType.TRANSFER)
   @IsUUID()
+  @IsOptional()
   @Validate(OnlyOneDefinedConstraint, ['targetShopId'])
   targetWarehouseId?: string;
 
   @ValidateIf((o) => o.type === TransactionType.TRANSFER)
   @IsUUID()
+  @IsOptional()
   @Validate(OnlyOneDefinedConstraint, ['targetWarehouseId'])
   targetShopId?: string;
 

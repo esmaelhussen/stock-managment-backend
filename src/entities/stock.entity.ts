@@ -17,11 +17,11 @@ export class Stock {
   @ManyToOne(() => Product, (product) => product.id)
   product: Product;
 
-  @ManyToOne(() => Warehouse, (warehouse) => warehouse.id)
-  warehouse: Warehouse;
+  @ManyToOne(() => Warehouse, { nullable: true, eager: true })
+  warehouse?: Warehouse;
 
-  @ManyToOne(() => Shop, { nullable: true })
-  shop: Shop; // Added relationship to link stock to a shop
+  @ManyToOne(() => Shop, { nullable: true, eager: true })
+  shop?: Shop; // Added relationship to link stock to a shop
 
   @Column({ nullable: false })
   quantity: number;

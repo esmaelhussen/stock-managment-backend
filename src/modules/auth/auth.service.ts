@@ -48,7 +48,6 @@ export class AuthService {
 
     const permissions = await this.usersService.getUserPermissions(user.id);
     const roles = user.userRoles.map((ur) => ur.role.name);
-    
 
     console.log(`User warehouseId: ${user.warehouseId}`);
 
@@ -56,10 +55,11 @@ export class AuthService {
       ? await this.usersService.getWarehouse(user.warehouseId)
       : null;
     const shop = user.shopId
-        ? await this.usersService.getShop(user.shopId)
-        : null;
+      ? await this.usersService.getShop(user.shopId)
+      : null;
 
     console.log(`Fetched warehouse:`, warehouse);
+    console.log(`Fetched shop:`, shop);
 
     const payload = {
       sub: user.id,
@@ -69,7 +69,7 @@ export class AuthService {
       roles,
       permissions,
       warehouse,
-      shop
+      shop,
     };
 
     return {
@@ -82,7 +82,7 @@ export class AuthService {
         roles,
         permissions,
         warehouse,
-        shop
+        shop,
       },
     };
   }
