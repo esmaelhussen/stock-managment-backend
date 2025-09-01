@@ -17,6 +17,7 @@ import { UnitsModule } from './modules/units/units.module';
 import { ProductsModule } from './modules/products/products.module';
 import { StockTransactionModule } from './modules/stock-transactions/stockTransaction.module';
 import { ShopModule } from './modules/shop/shop.module';
+import { SalesTransactionsModule } from './modules/sales-transactions/sales-transactions.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { ShopModule } from './modules/shop/shop.module';
     ProductsModule,
     StockTransactionModule,
     ShopModule,
+    SalesTransactionsModule,
   ],
   controllers: [AppController],
   providers: [
