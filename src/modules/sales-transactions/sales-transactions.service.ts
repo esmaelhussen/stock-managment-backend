@@ -1,4 +1,3 @@
-// ...existing code...
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -128,5 +127,24 @@ export class SalesTransactionsService {
     }
 
     return savedTransaction;
+  }
+
+  async updateStatus(
+    id: string,
+    status: 'unpayed' | 'payed',
+  ): Promise<SalesTransaction> {
+    const transaction = await this.transactionRepo.findOne({ where: { id } });
+    if (!transaction) {
+      throw new BadRequestException('Transaction not found');
+    }
+
+    if (transaction.paymentMethod !== 'credit') {
+      throw new BadRequestException(
+        'Only credit transactions can update status',
+      );
+    }
+
+    transaction.status = status;
+    return this.transactionRepo.save(transaction);
   }
 }

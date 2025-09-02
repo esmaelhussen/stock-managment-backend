@@ -1,11 +1,11 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
-import { User } from './entities/user.entity';
-import { Role } from './entities/role.entity';
-import { Permission } from './entities/permission.entity';
-import { UserRole } from './entities/user-role.entity';
-import { RolePermission } from './entities/role-permission.entity';
+// import { User } from './entities/user.entity';
+// import { Role } from './entities/role.entity';
+// import { Permission } from './entities/permission.entity';
+// import { UserRole } from './entities/user-role.entity';
+// import { RolePermission } from './entities/role-permission.entity';
 
 dotenv.config({ path: '.env' });
 

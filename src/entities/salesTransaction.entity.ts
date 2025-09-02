@@ -5,6 +5,8 @@ import {
   ManyToOne,
   OneToMany,
   CreateDateColumn,
+  BeforeInsert,
+  BeforeUpdate,
 } from 'typeorm';
 import { Shop } from './shop.entity';
 import { SalesTransactionItem } from './salesTransactionItem.entity';
@@ -25,8 +27,12 @@ export class SalesTransaction {
   @ManyToOne(() => Shop, { nullable: false })
   shop: Shop;
 
-  @Column({ type: 'enum', enum: PaymentMethod })
-  paymentMethod: PaymentMethod;
+  @Column({
+    type: 'enum',
+    enum: PaymentMethod,
+    nullable: true,
+  })
+  paymentMethod: PaymentMethod | null;
 
   @Column({ nullable: true })
   creditorName?: string;
@@ -41,4 +47,15 @@ export class SalesTransaction {
     cascade: true,
   })
   items: SalesTransactionItem[];
+
+  @Column({ type: 'enum', enum: ['unpayed', 'payed'], default: 'unpayed' })
+  status: 'unpayed' | 'payed';
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  validatePaymentMethod() {
+    if (this.paymentMethod !== PaymentMethod.CREDIT) {
+      this.status = 'payed';
+    }
+  }
 }
