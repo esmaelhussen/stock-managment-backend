@@ -147,4 +147,54 @@ export class SalesTransactionsService {
     transaction.status = status;
     return this.transactionRepo.save(transaction);
   }
+
+  async generateReport(shopId: string) {
+    const transactions = await this.transactionRepo.find({
+      where: { shop: { id: shopId } },
+      relations: ['items', 'items.product'],
+    });
+
+    const productSales = transactions.reduce((acc, tx) => {
+      tx.items.forEach((item) => {
+        if (!acc[item.product.id]) {
+          acc[item.product.id] = {
+            name: item.product.name,
+            quantity: 0,
+            total: 0,
+          };
+        }
+        acc[item.product.id].quantity += item.quantity;
+        acc[item.product.id].total += item.totalPrice;
+      });
+      return acc;
+    }, {});
+
+    const paymentStatus = transactions.reduce(
+      (acc, tx) => {
+        acc[tx.status] = (acc[tx.status] || 0) + 1;
+        return acc;
+      },
+      { payed: 0, unpayed: 0 },
+    );
+
+    const paymentMethods = transactions.reduce((acc, tx) => {
+      if (tx.paymentMethod) {
+        acc[tx.paymentMethod] = (acc[tx.paymentMethod] || 0) + 1;
+      }
+      return acc;
+    }, {});
+
+    const salesOverTime = transactions.reduce((acc, tx) => {
+      const date = new Date(tx.createdAt).toISOString().split('T')[0];
+      acc[date] = (acc[date] || 0) + tx.totalPrice;
+      return acc;
+    }, {});
+
+    return {
+      productSales,
+      paymentStatus,
+      paymentMethods,
+      salesOverTime,
+    };
+  }
 }

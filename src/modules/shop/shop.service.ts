@@ -6,27 +6,24 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Shop } from '../../entities/shop.entity';
-import { WarehouseService } from '../warehouse/warehouse.service';
+// import { WarehouseService } from '../warehouse/warehouse.service';
 
 @Injectable()
 export class ShopService {
   constructor(
     @InjectRepository(Shop)
     private readonly shopRepository: Repository<Shop>,
-    private readonly warehouseService: WarehouseService,
+    // private readonly warehouseService: WarehouseService,
   ) {}
 
   async findAll() {
-    return this.shopRepository.find({ relations: ['warehouse'] });
+    return this.shopRepository.find();
   }
 
   async findOne(id: string) {
-    const shop = await this.shopRepository.findOne({
-      where: { id },
-      relations: ['warehouse'],
-    });
+    const shop = await this.shopRepository.findOneBy({ id });
     if (!shop) {
-      throw new NotFoundException('Shop not found.');
+      throw new NotFoundException('shop not found.');
     }
     return shop;
   }
@@ -39,16 +36,16 @@ export class ShopService {
       throw new ConflictException('A shop with this name already exists.');
     }
 
-    const warehouseId = data.warehouseId;
-    if (!warehouseId) {
-      throw new NotFoundException('Warehouse ID is required.');
-    }
-    const warehouse = await this.warehouseService.findOne(warehouseId);
-    if (!warehouse) {
-      throw new NotFoundException('Associated warehouse not found.');
-    }
+    // const warehouseId = data.warehouseId;
+    // if (!warehouseId) {
+    //   throw new NotFoundException('Warehouse ID is required.');
+    // }
+    // const warehouse = await this.warehouseService.findOne(warehouseId);
+    // if (!warehouse) {
+    //   throw new NotFoundException('Associated warehouse not found.');
+    // }
 
-    const shop = this.shopRepository.create({ ...data, warehouse });
+    const shop = this.shopRepository.create({ ...data /*warehouse*/ });
     return this.shopRepository.save(shop);
   }
 

@@ -160,10 +160,6 @@ export class StockTransactionService {
         throw new BadRequestException('Insufficient stock to transfer');
       }
 
-      sourceStock.quantity -= quantity;
-      sourceStock.price -= quantity * product.price;
-      await this.stockRepository.save(sourceStock);
-
       // Fetch/Create target stock
       let targetStock = await this.stockRepository.findOne({
         where: targetWarehouse
@@ -175,6 +171,10 @@ export class StockTransactionService {
             ? { shop: { id: targetShop.id }, product: { id: productId } }
             : undefined,
       });
+
+      if (sourceStock.id === targetStock?.id) {
+        throw new BadRequestException('Source and target cannot be the same');
+      }
 
       if (targetStock) {
         targetStock.quantity = Number(targetStock.quantity);
@@ -191,6 +191,10 @@ export class StockTransactionService {
           shop: targetShop ?? undefined,
         });
       }
+
+      sourceStock.quantity -= quantity;
+      sourceStock.price -= quantity * product.price;
+      await this.stockRepository.save(sourceStock);
       await this.stockRepository.save(targetStock);
     }
 

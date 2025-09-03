@@ -24,4 +24,7 @@ export class Product {
 
   @ManyToOne(() => Unit, (unit) => unit.id, { eager: true })
   unit: Unit;
+
+  @Column({ nullable: true })
+  imageUrl: string;
 }

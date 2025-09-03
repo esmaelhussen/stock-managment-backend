@@ -8,7 +8,7 @@ import {
   Delete,
 } from '@nestjs/common';
 import { WarehouseService } from './warehouse.service';
-import { Warehouse } from '../../entities/warehouse.entity';
+// import { Warehouse } from '../../entities/warehouse.entity';
 import { CreateWarehouseDto } from './dto/create-warehouse.dto';
 import { UpdateWarehouseDto } from './dto/update-warehouse.dto';
 
@@ -44,8 +44,8 @@ export class WarehouseController {
     return this.warehouseService.remove(id);
   }
 
-  @Get(':id/shops')
-  getShops(@Param('id') id: string) {
-    return this.warehouseService.getShopsInWarehouse(id);
-  }
+  // @Get(':id/shops')
+  // getShops(@Param('id') id: string) {
+  //   return this.warehouseService.getShopsInWarehouse(id);
+  // }
 }

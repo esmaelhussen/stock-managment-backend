@@ -8,9 +8,9 @@ export class CreateShopDto {
   @IsString()
   address: string;
 
-  @IsUUID()
-  @IsNotEmpty()
-  warehouseId: string;
+  // @IsUUID()
+  // @IsNotEmpty()
+  // warehouseId: string;
 
   @IsString()
   description?: string;

@@ -36,4 +36,9 @@ export class SalesTransactionsController {
   ): Promise<SalesTransaction> {
     return this.salesTransactionsService.updateStatus(id, status);
   }
+
+  @Get('report')
+  async getReport(@Query('shopId') shopId: string) {
+    return this.salesTransactionsService.generateReport(shopId);
+  }
 }
