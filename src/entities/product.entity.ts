@@ -19,12 +19,12 @@ export class Product {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   price: number;
 
+  @Column({ nullable: true })
+  image: string;
+
   @ManyToOne(() => Category, (category) => category.id, { eager: true })
   category: Category;
 
   @ManyToOne(() => Unit, (unit) => unit.id, { eager: true })
   unit: Unit;
-
-  @Column({ nullable: true })
-  imageUrl: string;
 }

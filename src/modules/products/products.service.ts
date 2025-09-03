@@ -23,11 +23,15 @@ export class ProductsService {
   ) {}
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
-    const { name, sku, price, categoryId, unitId } = createProductDto;
+    const { name, sku, price, categoryId, unitId, image } = createProductDto;
 
     const existingProduct = await this.productRepository.findOneBy({ sku });
     if (existingProduct) {
       throw new ConflictException('Product with this SKU already exists');
+    }
+    const existname = await this.productRepository.findOneBy({ name });
+    if (existname) {
+      throw new ConflictException('Product with this name already exists');
     }
 
     const category = await this.categoryRepository.findOneBy({
@@ -49,8 +53,10 @@ export class ProductsService {
       unit,
       price,
       description: createProductDto.description,
+      image: createProductDto.image, // Save the image path
     });
 
+    console.log('Product to save:', product); // Debugging log
     return this.productRepository.save(product);
   }
 
@@ -92,7 +98,12 @@ export class ProductsService {
       product.unit = unit;
     }
 
+    if (updateProductDto.image) {
+      product.image = updateProductDto.image; // Update the image path
+    }
+
     Object.assign(product, updateProductDto);
+    console.log('Updated Product:', product); // Debugging log
     return this.productRepository.save(product);
   }
 
