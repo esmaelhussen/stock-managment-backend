@@ -84,20 +84,30 @@ export class UsersService {
     // Validate warehouseId for warehouse or shop roles
     if (hasWarehouseRole && !createUserDto.warehouseId) {
       throw new BadRequestException(
-        'Warehouse ID is required for warehouse or shop role',
+        'Warehouse ID is required for warehouse role',
       );
     }
 
+    if (hasShopRole && !createUserDto.shopId) {
+      throw new BadRequestException('shop ID is required for shop role');
+    }
+
     // Validate warehouseId should not exist for non-warehouse/shop roles
-    if (!hasWarehouseRole && !hasShopRole && createUserDto.warehouseId) {
+    if (!hasWarehouseRole && createUserDto.warehouseId) {
       throw new BadRequestException(
-        'Warehouse ID should not exist for non-warehouse/shop roles',
+        'Warehouse ID should not exist for non-warehouse roles',
       );
     }
 
     // Validate shopId if user has shop role
     if (hasShopRole && !createUserDto.shopId) {
       throw new BadRequestException('Shop ID is required for shop role');
+    }
+
+    if (hasWarehouseRole && !createUserDto.warehouseId) {
+      throw new BadRequestException(
+        'Warehouse ID is required for warehouse role',
+      );
     }
 
     // Validate shopId should not exist for non-shop roles
@@ -108,12 +118,12 @@ export class UsersService {
     }
 
     // Optional: Validate that shop belongs to warehouse
-    if (hasShopRole) {
-      const shop = await this.shopRepository.findOne({
-        where: { id: createUserDto.shopId },
-        relations: ['warehouse'],
-      });
-    }
+    // if (hasShopRole) {
+    //   const shop = await this.shopRepository.findOne({
+    //     where: { id: createUserDto.shopId },
+    //     relations: ['warehouse'],
+    //   });
+    // }
 
     const user = this.usersRepository.create(userData);
     const savedUser = await this.usersRepository.save(user);
