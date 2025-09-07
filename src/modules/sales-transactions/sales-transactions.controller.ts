@@ -38,7 +38,10 @@ export class SalesTransactionsController {
   }
 
   @Get('report')
-  async getReport(@Query('shopId') shopId: string) {
-    return this.salesTransactionsService.generateReport(shopId);
+  async getReport(
+    @Query('shopId') shopId: string,
+    @Query('period') period: 'daily' | 'weekly' | 'monthly' | 'yearly',
+  ) {
+    return this.salesTransactionsService.generateReport(shopId, period);
   }
 }

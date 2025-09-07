@@ -10,6 +10,7 @@ import {
   CreateSalesTransactionDto,
   SalesTransactionItemDto,
 } from './dto/create-sales-transaction.dto';
+import { Between } from 'typeorm';
 
 @Injectable()
 export class SalesTransactionsService {
@@ -148,53 +149,182 @@ export class SalesTransactionsService {
     return this.transactionRepo.save(transaction);
   }
 
-  async generateReport(shopId: string) {
+  async generateReport(
+    shopId: string,
+    period: 'daily' | 'weekly' | 'monthly' | 'yearly',
+  ) {
+    const now = new Date();
+    let startDate: Date;
+
+    switch (period) {
+      case 'daily':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case 'weekly':
+        startDate = new Date(now);
+        startDate.setDate(now.getDate() - 7);
+        break;
+      case 'monthly':
+        startDate = new Date(now);
+        startDate.setDate(now.getDate() - 30);
+        break;
+      case 'yearly':
+        startDate = new Date(now);
+        startDate.setDate(now.getDate() - 365);
+        break;
+      default:
+        throw new BadRequestException('Invalid period');
+    }
+
     const transactions = await this.transactionRepo.find({
-      where: { shop: { id: shopId } },
+      where: {
+        shop: { id: shopId },
+        createdAt: Between(startDate, now),
+      },
       relations: ['items', 'items.product'],
     });
 
-    const productSales = transactions.reduce((acc, tx) => {
+    if (!shopId) {
+      throw new BadRequestException('Shop is required');
+    }
+
+    const formatDate = (d: Date) => d.toISOString().split('T')[0];
+
+    // Per-day grouped results
+    const grouped: Record<
+      string,
+      {
+        productSales: Record<
+          string,
+          { name: string; quantity: number; eachPrice: number; total: number }
+        >;
+        paymentStatus: { payed: number; unpayed: number };
+        paymentMethods: Record<string, number>;
+        totals: {
+          totalQuantity: number;
+          totalPrice: number;
+          totalTransactions: number;
+        };
+        mostUsedPaymentMethod?: string | null;
+      }
+    > = {};
+
+    // Overall summary
+    const summary = {
+      productSales: {} as Record<
+        string,
+        { name: string; quantity: number; eachPrice: number; total: number }
+      >,
+      paymentStatus: { payed: 0, unpayed: 0 },
+      paymentMethods: {} as Record<string, number>,
+      totals: { totalQuantity: 0, totalPrice: 0, totalTransactions: 0 },
+      mostUsedPaymentMethod: null as string | null,
+    };
+
+    transactions.forEach((tx) => {
+      const dateKey = formatDate(new Date(tx.createdAt));
+
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = {
+          productSales: {},
+          paymentStatus: { payed: 0, unpayed: 0 },
+          paymentMethods: {},
+          totals: { totalQuantity: 0, totalPrice: 0, totalTransactions: 0 },
+        };
+      }
+
+      const dayData = grouped[dateKey];
+
+      // --- Product sales ---
       tx.items.forEach((item) => {
-        if (!acc[item.product.id]) {
-          acc[item.product.id] = {
+        // Day-level
+        if (!dayData.productSales[item.product.id]) {
+          dayData.productSales[item.product.id] = {
             name: item.product.name,
             quantity: 0,
+            eachPrice: Number(Number(item.price).toFixed(2)),
             total: 0,
           };
         }
-        acc[item.product.id].quantity += item.quantity;
-        acc[item.product.id].total += item.totalPrice;
+        dayData.productSales[item.product.id].quantity += item.quantity;
+        dayData.productSales[item.product.id].total = dayData.productSales[
+          item.product.id
+        ].total = Number(
+          (
+            Number(dayData.productSales[item.product.id].total) +
+            item.quantity * item.price
+          ).toFixed(2),
+        );
+
+        dayData.totals.totalQuantity += item.quantity;
+        dayData.totals.totalPrice += Number(Number(item.totalPrice).toFixed(2));
+
+        // Summary-level
+        if (!summary.productSales[item.product.id]) {
+          summary.productSales[item.product.id] = {
+            name: item.product.name,
+            quantity: 0,
+            eachPrice: Number(Number(item.price).toFixed(2)),
+            total: 0,
+          };
+        }
+        summary.productSales[item.product.id].quantity += item.quantity;
+        summary.productSales[item.product.id].total += Number(
+          Number(item.totalPrice).toFixed(2),
+        );
+
+        summary.totals.totalQuantity += item.quantity;
+        summary.totals.totalPrice += Number(Number(item.totalPrice).toFixed(2));
       });
-      return acc;
-    }, {});
 
-    const paymentStatus = transactions.reduce(
-      (acc, tx) => {
-        acc[tx.status] = (acc[tx.status] || 0) + 1;
-        return acc;
-      },
-      { payed: 0, unpayed: 0 },
-    );
+      // --- Payment status ---
+      dayData.paymentStatus[tx.status] =
+        (dayData.paymentStatus[tx.status] || 0) + 1;
+      summary.paymentStatus[tx.status] =
+        (summary.paymentStatus[tx.status] || 0) + 1;
 
-    const paymentMethods = transactions.reduce((acc, tx) => {
+      // --- Payment methods ---
       if (tx.paymentMethod) {
-        acc[tx.paymentMethod] = (acc[tx.paymentMethod] || 0) + 1;
+        dayData.paymentMethods[tx.paymentMethod] =
+          (dayData.paymentMethods[tx.paymentMethod] || 0) + 1;
+        summary.paymentMethods[tx.paymentMethod] =
+          (summary.paymentMethods[tx.paymentMethod] || 0) + 1;
       }
-      return acc;
-    }, {});
 
-    const salesOverTime = transactions.reduce((acc, tx) => {
-      const date = new Date(tx.createdAt).toISOString().split('T')[0];
-      acc[date] = (acc[date] || 0) + tx.totalPrice;
-      return acc;
-    }, {});
+      // --- Transaction count ---
+      dayData.totals.totalTransactions += 1;
+      summary.totals.totalTransactions += 1;
+    });
+
+    // Most used method per day
+    for (const dateKey of Object.keys(grouped)) {
+      const methods = grouped[dateKey].paymentMethods;
+      let mostUsed: string | null = null;
+      let max = 0;
+      for (const [method, count] of Object.entries(methods)) {
+        if (count > max) {
+          mostUsed = method;
+          max = count;
+        }
+      }
+      grouped[dateKey].mostUsedPaymentMethod = mostUsed;
+    }
+
+    // Most used method in summary
+    let summaryMostUsed: string | null = null;
+    let max = 0;
+    for (const [method, count] of Object.entries(summary.paymentMethods)) {
+      if (count > max) {
+        summaryMostUsed = method;
+        max = count;
+      }
+    }
+    summary.mostUsedPaymentMethod = summaryMostUsed;
 
     return {
-      productSales,
-      paymentStatus,
-      paymentMethods,
-      salesOverTime,
+      range: { period, startDate, endDate: now },
+      grouped,
+      summary,
     };
   }
 }
