@@ -10,6 +10,8 @@ import {
 } from 'typeorm';
 import { Shop } from './shop.entity';
 import { SalesTransactionItem } from './salesTransactionItem.entity';
+import { Warehouse } from './warehouse.entity';
+import { User } from './user.entity';
 
 export enum PaymentMethod {
   TELEBIRR = 'telebirr',
@@ -24,8 +26,11 @@ export class SalesTransaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Shop, { nullable: false })
+  @ManyToOne(() => Shop, { nullable: true })
   shop: Shop;
+
+  @ManyToOne(() => Warehouse, { nullable: true })
+  warehouse: Warehouse;
 
   @Column({
     type: 'enum',
@@ -51,11 +56,22 @@ export class SalesTransaction {
   @Column({ type: 'enum', enum: ['unpayed', 'payed'], default: 'unpayed' })
   status: 'unpayed' | 'payed';
 
+  @ManyToOne(() => User, { nullable: true })
+  transactedBy: User;
+
   @BeforeInsert()
   @BeforeUpdate()
   validatePaymentMethod() {
     if (this.paymentMethod !== PaymentMethod.CREDIT) {
       this.status = 'payed';
+    }
+  }
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  validateLocation() {
+    if (!this.shop && !this.warehouse) {
+      throw new Error('Either shop or warehouse must be provided.');
     }
   }
 }

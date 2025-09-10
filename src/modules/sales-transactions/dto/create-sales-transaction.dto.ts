@@ -7,6 +7,8 @@ import {
   ValidateNested,
   ArrayMinSize,
   Min,
+  ValidateIf,
+  IsUUID,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaymentMethod } from '../../../entities/salesTransaction.entity';
@@ -22,9 +24,15 @@ export class SalesTransactionItemDto {
 }
 
 export class CreateSalesTransactionDto {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  shopId: string;
+  @ValidateIf((o) => !o.warehouseId)
+  shopId?: string;
+
+  @IsOptional()
+  @IsString()
+  @ValidateIf((o) => !o.shopId)
+  warehouseId?: string;
 
   @IsEnum(PaymentMethod)
   paymentMethod: PaymentMethod;
@@ -32,6 +40,9 @@ export class CreateSalesTransactionDto {
   @IsOptional()
   @IsString()
   creditorName?: string;
+
+  @IsUUID()
+  transactedById?: string;
 
   @ValidateNested({ each: true })
   @Type(() => SalesTransactionItemDto)

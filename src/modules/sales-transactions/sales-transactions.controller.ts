@@ -6,10 +6,13 @@ import {
   Query,
   Patch,
   Param,
+  Req,
+  BadRequestException,
 } from '@nestjs/common';
 import { SalesTransactionsService } from './sales-transactions.service';
 import { CreateSalesTransactionDto } from './dto/create-sales-transaction.dto';
 import { SalesTransaction } from '../../entities/salesTransaction.entity';
+import type { Request } from 'express';
 
 @Controller('sales-transactions')
 export class SalesTransactionsController {
@@ -20,13 +23,22 @@ export class SalesTransactionsController {
   @Post()
   async create(
     @Body() dto: CreateSalesTransactionDto,
+    // @Req() req: Request,
   ): Promise<SalesTransaction> {
+    // const userId = req.cookies['userId']; // Extract userId from cookies
+    // if (!userId) {
+    //   throw new BadRequestException('User ID is required');
+    // }
+    // dto.transactedById = transa; // Assign userId to the DTO
     return this.salesTransactionsService.create(dto);
   }
 
   @Get()
-  async findAll(@Query('shopId') shopId?: string): Promise<SalesTransaction[]> {
-    return this.salesTransactionsService.findAll(shopId);
+  async findAll(
+    @Query('shopId') shopId?: string,
+    @Query('warehouseId') warehouseId?: string,
+  ): Promise<SalesTransaction[]> {
+    return this.salesTransactionsService.findAll(shopId, warehouseId);
   }
 
   @Patch(':id/status')
@@ -39,9 +51,14 @@ export class SalesTransactionsController {
 
   @Get('report')
   async getReport(
-    @Query('shopId') shopId: string,
     @Query('period') period: 'daily' | 'weekly' | 'monthly' | 'yearly',
+    @Query('shopId') shopId?: string,
+    @Query('warehouseId') warehouseId?: string,
   ) {
-    return this.salesTransactionsService.generateReport(shopId, period);
+    return this.salesTransactionsService.generateReport(
+      period,
+      shopId,
+      warehouseId,
+    );
   }
 }

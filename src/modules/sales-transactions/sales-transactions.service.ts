@@ -6,6 +6,8 @@ import { SalesTransactionItem } from '../../entities/salesTransactionItem.entity
 import { Stock } from '../../entities/stock.entity';
 import { Product } from '../../entities/product.entity';
 import { Shop } from '../../entities/shop.entity';
+import { Warehouse } from '../../entities/warehouse.entity';
+import { User } from '../../entities/user.entity';
 import {
   CreateSalesTransactionDto,
   SalesTransactionItemDto,
@@ -25,20 +27,53 @@ export class SalesTransactionsService {
     private readonly productRepo: Repository<Product>,
     @InjectRepository(Shop)
     private readonly shopRepo: Repository<Shop>,
+    @InjectRepository(Warehouse)
+    private readonly warehouseRepo: Repository<Warehouse>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<any>, // Replace 'any' with your User entity type
   ) {}
 
-  async findAll(shopId?: string): Promise<SalesTransaction[]> {
-    const where = shopId ? { shop: { id: shopId } } : {};
+  async findAll(
+    shopId?: string,
+    warehouseId?: string,
+  ): Promise<SalesTransaction[]> {
+    const where: any = {};
+
+    if (shopId) {
+      where.shop = { id: shopId };
+    } else if (warehouseId) {
+      where.warehouse = { id: warehouseId };
+    }
+
     return this.transactionRepo.find({
       where,
-      relations: ['items', 'items.product', 'shop'],
+      relations: ['items', 'items.product', 'shop', 'warehouse', 'transactedBy'],
       order: { createdAt: 'DESC' },
     });
   }
 
   async create(dto: CreateSalesTransactionDto): Promise<SalesTransaction> {
-    const shop = await this.shopRepo.findOne({ where: { id: dto.shopId } });
-    if (!shop) throw new BadRequestException('Shop not found');
+    if (!dto.shopId && !dto.warehouseId) {
+      throw new BadRequestException(
+        'Either shopId or warehouseId must be provided',
+      );
+    }
+
+    const transactedBy = await this.userRepository.findOne({
+      where: { id: dto.transactedById },
+    });
+    if (!transactedBy) throw new BadRequestException('User not found');
+
+    let location: Shop | Warehouse | null = null;
+    if (dto.shopId) {
+      location = await this.shopRepo.findOne({ where: { id: dto.shopId } });
+      if (!location) throw new BadRequestException('Shop not found');
+    } else if (dto.warehouseId) {
+      location = await this.warehouseRepo.findOne({
+        where: { id: dto.warehouseId },
+      });
+      if (!location) throw new BadRequestException('Warehouse not found');
+    }
 
     let totalPrice = 0;
     const items: SalesTransactionItem[] = [];
@@ -46,10 +81,12 @@ export class SalesTransactionsService {
     for (const itemDto of dto.items) {
       const stock = await this.stockRepo.findOne({
         where: {
-          shop: { id: dto.shopId },
+          [dto.shopId ? 'shop' : 'warehouse']: {
+            id: dto.shopId || dto.warehouseId,
+          },
           product: { id: itemDto.productId },
         },
-        relations: ['shop', 'product'],
+        relations: ['shop', 'warehouse', 'product'],
       });
       if (!stock) {
         throw new BadRequestException(`Stock or product not found`);
@@ -92,26 +129,32 @@ export class SalesTransactionsService {
     }
 
     const transaction = this.transactionRepo.create({
-      shop,
+      [dto.shopId ? 'shop' : 'warehouse']: location,
       paymentMethod: dto.paymentMethod,
       creditorName: dto.creditorName,
       totalPrice,
       items,
+      transactedBy,
     });
     const savedTransaction = await this.transactionRepo.save(transaction);
 
-    // Decrease stock quantities
+    // Decrease stock quantities and update total sold and price
     for (const itemDto of dto.items) {
       // Decrease quantity
       await this.stockRepo.decrement(
         {
-          shop: { id: dto.shopId },
+          [dto.shopId ? 'shop' : 'warehouse']: {
+            id: dto.shopId || dto.warehouseId,
+          },
           product: { id: itemDto.productId },
         },
         'quantity',
         itemDto.quantity,
       );
-      // Increase price by total sold for this product
+
+      // Increment total sold for the product
+
+      // Update the price based on total sold
       const product = await this.productRepo.findOne({
         where: { id: itemDto.productId },
       });
@@ -119,7 +162,9 @@ export class SalesTransactionsService {
       const itemTotal = price * itemDto.quantity;
       await this.stockRepo.increment(
         {
-          shop: { id: dto.shopId },
+          [dto.shopId ? 'shop' : 'warehouse']: {
+            id: dto.shopId || dto.warehouseId,
+          },
           product: { id: itemDto.productId },
         },
         'price',
@@ -150,8 +195,9 @@ export class SalesTransactionsService {
   }
 
   async generateReport(
-    shopId: string,
     period: 'daily' | 'weekly' | 'monthly' | 'yearly',
+    shopId?: string,
+    warehouseId?: string,
   ) {
     const now = new Date();
     let startDate: Date;
@@ -176,17 +222,20 @@ export class SalesTransactionsService {
         throw new BadRequestException('Invalid period');
     }
 
-    const transactions = await this.transactionRepo.find({
-      where: {
-        shop: { id: shopId },
-        createdAt: Between(startDate, now),
-      },
-      relations: ['items', 'items.product'],
-    });
+    const where: any = {
+      createdAt: Between(startDate, now),
+    };
 
-    if (!shopId) {
-      throw new BadRequestException('Shop is required');
+    if (shopId) {
+      where.shop = { id: shopId };
+    } else if (warehouseId) {
+      where.warehouse = { id: warehouseId };
     }
+
+    const transactions = await this.transactionRepo.find({
+      where,
+      relations: ['items', 'items.product', 'shop', 'warehouse'],
+    });
 
     const formatDate = (d: Date) => d.toISOString().split('T')[0];
 
@@ -196,7 +245,13 @@ export class SalesTransactionsService {
       {
         productSales: Record<
           string,
-          { name: string; quantity: number; eachPrice: number; total: number }
+          {
+            name: string;
+            quantity: number;
+            eachPrice: number;
+            total: number;
+            source?: { type: 'shop' | 'warehouse'; name: string };
+          }
         >;
         paymentStatus: { payed: number; unpayed: number };
         paymentMethods: Record<string, number>;
@@ -205,6 +260,7 @@ export class SalesTransactionsService {
           totalPrice: number;
           totalTransactions: number;
         };
+        source?: { type: 'shop' | 'warehouse'; name: string }; // Added source property
         mostUsedPaymentMethod?: string | null;
       }
     > = {};
@@ -235,6 +291,13 @@ export class SalesTransactionsService {
 
       const dayData = grouped[dateKey];
 
+      // Add shop or warehouse name to the grouped data
+      if (!dayData.source) {
+        dayData.source = tx.shop
+          ? { type: 'shop', name: tx.shop.name }
+          : { type: 'warehouse', name: tx.warehouse.name };
+      }
+
       // --- Product sales ---
       tx.items.forEach((item) => {
         // Day-level
@@ -244,12 +307,13 @@ export class SalesTransactionsService {
             quantity: 0,
             eachPrice: Number(Number(item.price).toFixed(2)),
             total: 0,
+            source: tx.shop
+              ? { type: 'shop', name: tx.shop.name }
+              : { type: 'warehouse', name: tx.warehouse.name }, // Populate source
           };
         }
         dayData.productSales[item.product.id].quantity += item.quantity;
-        dayData.productSales[item.product.id].total = dayData.productSales[
-          item.product.id
-        ].total = Number(
+        dayData.productSales[item.product.id].total = Number(
           (
             Number(dayData.productSales[item.product.id].total) +
             item.quantity * item.price
@@ -300,7 +364,7 @@ export class SalesTransactionsService {
     for (const dateKey of Object.keys(grouped)) {
       const methods = grouped[dateKey].paymentMethods;
       let mostUsed: string | null = null;
-      let max = 0;
+      let max = 0; // Declare max variable
       for (const [method, count] of Object.entries(methods)) {
         if (count > max) {
           mostUsed = method;

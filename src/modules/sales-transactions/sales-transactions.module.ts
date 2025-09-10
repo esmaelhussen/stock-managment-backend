@@ -7,6 +7,8 @@ import { SalesTransactionItem } from '../../entities/salesTransactionItem.entity
 import { Stock } from '../../entities/stock.entity';
 import { Product } from '../../entities/product.entity';
 import { Shop } from '../../entities/shop.entity';
+import { Warehouse } from '../../entities/warehouse.entity';
+import { User } from '../../entities/user.entity';
 
 @Module({
   imports: [
@@ -16,6 +18,9 @@ import { Shop } from '../../entities/shop.entity';
       Stock,
       Product,
       Shop,
+      Warehouse,
+      User,
+      // Added Warehouse entity
     ]),
   ],
   controllers: [SalesTransactionsController],
