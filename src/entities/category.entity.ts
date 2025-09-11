@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 
 @Entity()
 export class Category {
@@ -10,4 +10,10 @@ export class Category {
 
   @Column({ nullable: true })
   identifier?: string;
+
+  @ManyToOne(() => Category, (category) => category.subcategories, { nullable: true })
+  parentCategory: Category;
+
+  @OneToMany(() => Category, (category) => category.parentCategory)
+  subcategories: Category[];
 }

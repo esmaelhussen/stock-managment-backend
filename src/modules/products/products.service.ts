@@ -61,7 +61,9 @@ export class ProductsService {
   }
 
   async findAll(): Promise<Product[]> {
-    return this.productRepository.find();
+    return this.productRepository.find({
+      relations: ['category', 'category.parentCategory', 'category.subcategories'], // Include nested relationships for Category
+    });
   }
 
   async findOne(id: string): Promise<Product> {
