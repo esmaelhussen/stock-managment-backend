@@ -53,6 +53,7 @@ export class ProductsService {
       unit,
       price,
       description: createProductDto.description,
+      brand: createProductDto.brand,
       image: createProductDto.image, // Save the image path
     });
 
@@ -62,7 +63,11 @@ export class ProductsService {
 
   async findAll(): Promise<Product[]> {
     return this.productRepository.find({
-      relations: ['category', 'category.parentCategory', 'category.subcategories'], // Include nested relationships for Category
+      relations: [
+        'category',
+        'category.parentCategory',
+        'category.subcategories',
+      ], // Include nested relationships for Category
     });
   }
 

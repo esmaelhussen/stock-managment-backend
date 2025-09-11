@@ -16,6 +16,10 @@ export class CreateProductDto {
   @IsOptional()
   description?: string;
 
+  @IsString()
+  @IsOptional()
+  brand?: string;
+
   @IsNotEmpty()
   @IsString()
   sku: string;
