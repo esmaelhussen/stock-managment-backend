@@ -40,4 +40,9 @@ export class CreateProductDto {
   @IsString()
   @IsOptional()
   image?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value))
+  @IsNumber()
+  alertQuantity?: number;
 }

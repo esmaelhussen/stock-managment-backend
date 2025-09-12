@@ -4,7 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, LessThan } from 'typeorm';
 import { Product } from '../../entities/product.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -26,7 +26,7 @@ export class ProductsService {
   ) {}
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
-    const { name, sku, price, categoryId, unitId, brandId, image } =
+    const { name, sku, price, categoryId, unitId, brandId, image, alertQuantity } =
       createProductDto;
 
     const existingProduct = await this.productRepository.findOneBy({ sku });
@@ -64,6 +64,7 @@ export class ProductsService {
       price,
       description: createProductDto.description,
       image: createProductDto.image, // Save the image path
+      alertQuantity, // Include alert quantity
     });
 
     console.log('Product to save:', product); // Debugging log
@@ -136,5 +137,11 @@ export class ProductsService {
   async remove(id: string): Promise<void> {
     const product = await this.findOne(id);
     await this.productRepository.remove(product);
+  }
+
+  async findLowStockProducts(): Promise<Product[]> {
+    return this.productRepository.createQueryBuilder('product')
+      .where('product.stock < product.alertQuantity')
+      .getMany();
   }
 }
