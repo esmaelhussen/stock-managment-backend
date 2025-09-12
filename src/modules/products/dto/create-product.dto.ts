@@ -16,10 +16,6 @@ export class CreateProductDto {
   @IsOptional()
   description?: string;
 
-  @IsString()
-  @IsOptional()
-  brand?: string;
-
   @IsNotEmpty()
   @IsString()
   sku: string;
@@ -36,6 +32,10 @@ export class CreateProductDto {
   @IsNotEmpty()
   @IsUUID()
   unitId: string;
+
+  @IsNotEmpty()
+  @IsUUID()
+  brandId: string;
 
   @IsString()
   @IsOptional()

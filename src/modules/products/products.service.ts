@@ -10,6 +10,7 @@ import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Category } from '../../entities/category.entity';
 import { Unit } from '../../entities/unit.entity';
+import { Brand } from 'src/entities/brand.entity';
 
 @Injectable()
 export class ProductsService {
@@ -20,10 +21,13 @@ export class ProductsService {
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(Unit)
     private readonly unitRepository: Repository<Unit>,
+    @InjectRepository(Brand)
+    private readonly brandRepository: Repository<Brand>,
   ) {}
 
   async create(createProductDto: CreateProductDto): Promise<Product> {
-    const { name, sku, price, categoryId, unitId, image } = createProductDto;
+    const { name, sku, price, categoryId, unitId, brandId, image } =
+      createProductDto;
 
     const existingProduct = await this.productRepository.findOneBy({ sku });
     if (existingProduct) {
@@ -46,14 +50,19 @@ export class ProductsService {
       throw new NotFoundException('Unit not found');
     }
 
+    const brand = await this.brandRepository.findOneBy({ id: brandId });
+    if (!brand) {
+      throw new NotFoundException('Brand not found');
+    }
+
     const product = this.productRepository.create({
       name,
       sku,
       category,
       unit,
+      brand,
       price,
       description: createProductDto.description,
-      brand: createProductDto.brand,
       image: createProductDto.image, // Save the image path
     });
 
@@ -103,6 +112,16 @@ export class ProductsService {
         throw new NotFoundException('Unit not found');
       }
       product.unit = unit;
+    }
+
+    if (updateProductDto.brandId) {
+      const brand = await this.brandRepository.findOneBy({
+        id: updateProductDto.brandId,
+      });
+      if (!brand) {
+        throw new NotFoundException('Brand not found');
+      }
+      product.brand = brand;
     }
 
     if (updateProductDto.image) {

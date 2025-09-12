@@ -18,6 +18,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { StockTransactionModule } from './modules/stock-transactions/stockTransaction.module';
 import { ShopModule } from './modules/shop/shop.module';
 import { SalesTransactionsModule } from './modules/sales-transactions/sales-transactions.module';
+import { BrandsModule } from './modules/brands/brands.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { SalesTransactionsModule } from './modules/sales-transactions/sales-tran
     StockTransactionModule,
     ShopModule,
     SalesTransactionsModule,
+    BrandsModule,
   ],
   controllers: [AppController],
   providers: [
