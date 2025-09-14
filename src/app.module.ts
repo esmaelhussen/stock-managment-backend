@@ -19,6 +19,7 @@ import { StockTransactionModule } from './modules/stock-transactions/stockTransa
 import { ShopModule } from './modules/shop/shop.module';
 import { SalesTransactionsModule } from './modules/sales-transactions/sales-transactions.module';
 import { BrandsModule } from './modules/brands/brands.module';
+import { CustomerModule } from './modules/customers/customer.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { BrandsModule } from './modules/brands/brands.module';
     ShopModule,
     SalesTransactionsModule,
     BrandsModule,
+    CustomerModule,
   ],
   controllers: [AppController],
   providers: [

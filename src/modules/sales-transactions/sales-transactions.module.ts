@@ -9,6 +9,7 @@ import { Product } from '../../entities/product.entity';
 import { Shop } from '../../entities/shop.entity';
 import { Warehouse } from '../../entities/warehouse.entity';
 import { User } from '../../entities/user.entity';
+import { Customer } from '../../entities/customer.entity';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { User } from '../../entities/user.entity';
       Shop,
       Warehouse,
       User,
+      Customer,
       // Added Warehouse entity
     ]),
   ],

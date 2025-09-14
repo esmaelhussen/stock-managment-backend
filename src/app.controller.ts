@@ -9,6 +9,7 @@ import { UnitsService } from './modules/units/units.service';
 import { ProductsService } from './modules/products/products.service';
 import { ShopService } from './modules/shop/shop.service';
 import { BrandsService } from './modules/brands/brands.service';
+import { CustomerService } from './modules/customers/customer.service';
 
 @Controller()
 export class AppController {
@@ -23,6 +24,7 @@ export class AppController {
     private readonly productsService: ProductsService,
     private readonly shopService: ShopService,
     private readonly brandService: BrandsService,
+    private readonly customerService: CustomerService,
   ) {}
 
   @Get()
@@ -42,6 +44,7 @@ export class AppController {
       products,
       shops,
       brands,
+      customers,
     ] = await Promise.all([
       this.usersService.findAll(),
       this.rolesService.findAll(),
@@ -52,6 +55,7 @@ export class AppController {
       this.productsService.findAll(),
       this.shopService.findAll(),
       this.brandService.findAll(),
+      this.customerService.findAll(), // Fetch customers
     ]);
     // TODO: Add stock items count when implemented
     return {
@@ -64,6 +68,7 @@ export class AppController {
       products: products.length,
       shops: shops.length,
       brands: brands.length,
+      customers: customers.length, // Return customers count
     };
   }
 }

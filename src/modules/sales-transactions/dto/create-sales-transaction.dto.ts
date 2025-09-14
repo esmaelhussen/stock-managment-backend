@@ -48,4 +48,12 @@ export class CreateSalesTransactionDto {
   @Type(() => SalesTransactionItemDto)
   @ArrayMinSize(1)
   items: SalesTransactionItemDto[];
+
+  @IsNotEmpty()
+  @IsEnum(['Walk-In', 'Regular'])
+  customerType: 'Walk-In' | 'Regular';
+
+  @ValidateIf((o) => o.customerType === 'Regular')
+  @IsUUID()
+  customerId?: string;
 }

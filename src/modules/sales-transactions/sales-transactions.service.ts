@@ -8,11 +8,13 @@ import { Product } from '../../entities/product.entity';
 import { Shop } from '../../entities/shop.entity';
 import { Warehouse } from '../../entities/warehouse.entity';
 import { User } from '../../entities/user.entity';
+import { Customer } from '../../entities/customer.entity';
 import {
   CreateSalesTransactionDto,
   SalesTransactionItemDto,
 } from './dto/create-sales-transaction.dto';
 import { Between } from 'typeorm';
+import { CustomerType } from '../../entities/salesTransaction.entity'; // Correct import
 
 @Injectable()
 export class SalesTransactionsService {
@@ -30,7 +32,9 @@ export class SalesTransactionsService {
     @InjectRepository(Warehouse)
     private readonly warehouseRepo: Repository<Warehouse>,
     @InjectRepository(User)
-    private readonly userRepository: Repository<any>, // Replace 'any' with your User entity type
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Customer)
+    private readonly customerRepo: Repository<Customer>,
   ) {}
 
   async findAll(
@@ -47,7 +51,14 @@ export class SalesTransactionsService {
 
     return this.transactionRepo.find({
       where,
-      relations: ['items', 'items.product', 'shop', 'warehouse', 'transactedBy'],
+      relations: [
+        'items',
+        'items.product',
+        'shop',
+        'warehouse',
+        'transactedBy',
+        'customer',
+      ],
       order: { createdAt: 'DESC' },
     });
   }
@@ -74,6 +85,32 @@ export class SalesTransactionsService {
       });
       if (!location) throw new BadRequestException('Warehouse not found');
     }
+
+    let customer: Customer | undefined = undefined;
+    if (dto.customerType === 'Regular') {
+      if (!dto.customerId) {
+        throw new BadRequestException(
+          'Customer ID is required for Regular customers',
+        );
+      }
+      customer =
+        (await this.customerRepo.findOne({ where: { id: dto.customerId } })) ||
+        undefined;
+      if (!customer) {
+        throw new BadRequestException('Customer not found');
+      }
+    }
+
+    // const transaction = this.transactionRepo.create({
+    //     ...dto,
+    //     shop: dto.shopId ? (location as Shop) : undefined,
+    //     warehouse: dto.warehouseId ? (location as Warehouse) : undefined,
+    //     transactedBy,
+    //     customer,
+    //   });
+
+    //   return this.transactionRepo.save(transaction);
+    // }
 
     let totalPrice = 0;
     const items: SalesTransactionItem[] = [];
@@ -135,6 +172,8 @@ export class SalesTransactionsService {
       totalPrice,
       items,
       transactedBy,
+      customerType: dto.customerType === 'Regular' ? CustomerType.REGULAR : CustomerType.WALK_IN, // Map to enum
+      customer, // Set customer relationship
     });
     const savedTransaction = await this.transactionRepo.save(transaction);
 

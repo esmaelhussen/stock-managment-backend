@@ -12,6 +12,7 @@ import { Shop } from './shop.entity';
 import { SalesTransactionItem } from './salesTransactionItem.entity';
 import { Warehouse } from './warehouse.entity';
 import { User } from './user.entity';
+import { Customer } from './customer.entity';
 
 export enum PaymentMethod {
   TELEBIRR = 'telebirr',
@@ -19,6 +20,11 @@ export enum PaymentMethod {
   AWASH = 'awash',
   EBIRR = 'e-birr',
   CREDIT = 'credit',
+}
+
+export enum CustomerType {
+  WALK_IN = 'Walk-In',
+  REGULAR = 'Regular',
 }
 
 @Entity()
@@ -58,6 +64,18 @@ export class SalesTransaction {
 
   @ManyToOne(() => User, { nullable: true })
   transactedBy: User;
+
+  @ManyToOne(() => Customer, (customer) => customer.transactions, {
+    nullable: true,
+  })
+  customer: Customer;
+
+  @Column({
+    type: 'enum',
+    enum: CustomerType,
+    default: CustomerType.WALK_IN,
+  })
+  customerType: CustomerType;
 
   @BeforeInsert()
   @BeforeUpdate()
