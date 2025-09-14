@@ -172,7 +172,10 @@ export class SalesTransactionsService {
       totalPrice,
       items,
       transactedBy,
-      customerType: dto.customerType === 'Regular' ? CustomerType.REGULAR : CustomerType.WALK_IN, // Map to enum
+      customerType:
+        dto.customerType === 'Regular'
+          ? CustomerType.REGULAR
+          : CustomerType.WALK_IN, // Map to enum
       customer, // Set customer relationship
     });
     const savedTransaction = await this.transactionRepo.save(transaction);
