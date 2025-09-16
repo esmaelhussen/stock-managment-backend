@@ -235,37 +235,77 @@ export class SalesTransactionsService {
         'quantity',
         itemDto.quantity,
       );
+    }
 
-      const stock = await this.stockRepo.findOne({
-        where: {
-          [dto.shopId ? 'shop' : 'warehouse']: {
-            id: dto.shopId || dto.warehouseId,
+    // --- fetch all stock items with product relation ---
+    const stockItems = await Promise.all(
+      dto.items.map((itemDto) =>
+        this.stockRepo.findOne({
+          where: {
+            [dto.shopId ? 'shop' : 'warehouse']: {
+              id: dto.shopId || dto.warehouseId,
+            },
+            product: { id: itemDto.productId },
           },
-          product: { id: itemDto.productId },
-        },
-      });
+          relations: ['product'],
+        }),
+      ),
+    );
 
-      if (stock) {
-        // Convert to numbers explicitly
-        const currentPrice = Number(stock.price);
-        // Use the transaction's finalPrice instead of item's finalPrice
-        const transactionFinalPrice = Number(savedTransaction.finalPrice);
+    // --- calculate per-item totals after item discounts ---
+    let totalPriceBeforeDiscount = 0;
+    const itemBaseTotals: number[] = [];
 
-        // Log values
+    for (let i = 0; i < dto.items.length; i++) {
+      const itemDto = dto.items[i];
+      const stock = stockItems[i];
+      if (!stock) continue;
 
-        // Add the full transaction amount to stock price
-        let newPrice = currentPrice + transactionFinalPrice;
+      const productPrice = Number(stock.product.price);
+      let itemBaseTotal = productPrice * itemDto.quantity;
 
-        // Round to 2 decimals
-        newPrice = Number(newPrice.toFixed(2));
-
-        stock.price = newPrice;
-        await this.stockRepo.save(stock);
+      // apply per-item discount first
+      if (itemDto.discountType === 'percent' && itemDto.discountPercent) {
+        const discountAmount = (itemBaseTotal * itemDto.discountPercent) / 100;
+        itemBaseTotal -= discountAmount;
+      } else if (itemDto.discountType === 'fixed' && itemDto.discountAmount) {
+        const discountAmount = Math.min(itemDto.discountAmount, itemBaseTotal);
+        itemBaseTotal -= discountAmount;
       }
 
-      // Increment total sold for the product
-      // Note: Using transaction's total finalPrice instead of individual item prices
+      itemBaseTotals[i] = itemBaseTotal;
+      totalPriceBeforeDiscount += itemBaseTotal;
     }
+
+    // --- update each stock (apply transaction discount proportionally if any) ---
+    for (let i = 0; i < dto.items.length; i++) {
+      const itemDto = dto.items[i];
+      const stock = stockItems[i];
+      if (!stock) continue;
+
+      let itemFinalPriceForStock = itemBaseTotals[i];
+
+      // apply proportional transaction discount (if any)
+      if (transactionDiscountAmount > 0 && totalPriceBeforeDiscount > 0) {
+        const proportionalDiscount =
+          (itemFinalPriceForStock / totalPriceBeforeDiscount) *
+          transactionDiscountAmount;
+        itemFinalPriceForStock -= proportionalDiscount;
+      }
+
+      // update stock price
+      stock.price = Number(
+        (Number(stock.price) + itemFinalPriceForStock).toFixed(2),
+      );
+
+      // decrease stock quantity
+      // stock.quantity = stock.quantity - itemDto.quantity;
+
+      await this.stockRepo.save(stock);
+    }
+
+    // Increment total sold for the product
+    // Note: Using transaction's total finalPrice instead of individual item prices
 
     return savedTransaction;
   }
