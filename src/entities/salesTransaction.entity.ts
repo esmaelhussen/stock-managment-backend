@@ -51,6 +51,22 @@ export class SalesTransaction {
   @Column('decimal', { precision: 12, scale: 2 })
   totalPrice: number;
 
+  @Column('decimal', { precision: 12, scale: 2, default: 0 })
+  discountAmount: number;
+
+  @Column('decimal', { precision: 5, scale: 2, default: 0 })
+  discountPercent: number;
+
+  @Column({
+    type: 'enum',
+    enum: ['fixed', 'percent', 'none'],
+    default: 'none',
+  })
+  discountType: 'fixed' | 'percent' | 'none';
+
+  @Column('decimal', { precision: 12, scale: 2, nullable: true })
+  finalPrice: number;
+
   @CreateDateColumn()
   createdAt: Date;
 

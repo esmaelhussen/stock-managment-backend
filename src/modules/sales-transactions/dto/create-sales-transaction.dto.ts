@@ -9,6 +9,7 @@ import {
   Min,
   ValidateIf,
   IsUUID,
+  IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PaymentMethod } from '../../../entities/salesTransaction.entity';
@@ -21,6 +22,20 @@ export class SalesTransactionItemDto {
   @IsInt()
   @Min(1)
   quantity: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discountAmount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discountPercent?: number;
+
+  @IsOptional()
+  @IsEnum(['fixed', 'percent', 'none'])
+  discountType?: 'fixed' | 'percent' | 'none';
 }
 
 export class CreateSalesTransactionDto {
@@ -56,4 +71,18 @@ export class CreateSalesTransactionDto {
   @ValidateIf((o) => o.customerType === 'Regular')
   @IsUUID()
   customerId?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discountAmount?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discountPercent?: number;
+
+  @IsOptional()
+  @IsEnum(['fixed', 'percent', 'none'])
+  discountType?: 'fixed' | 'percent' | 'none';
 }

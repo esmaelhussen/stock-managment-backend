@@ -113,6 +113,7 @@ export class SalesTransactionsService {
     // }
 
     let totalPrice = 0;
+    let totalDiscountAmount = 0;
     const items: SalesTransactionItem[] = [];
 
     for (const itemDto of dto.items) {
@@ -140,12 +141,31 @@ export class SalesTransactionsService {
       if (!product) throw new BadRequestException('Product not found');
       const price = Number(product.price);
       const itemTotal = price * itemDto.quantity;
+
+      // Calculate item discount
+      let itemDiscountAmount = 0;
+      let itemFinalPrice = itemTotal;
+
+      if (itemDto.discountType === 'percent' && itemDto.discountPercent) {
+        itemDiscountAmount = (itemTotal * itemDto.discountPercent) / 100;
+        itemFinalPrice = itemTotal - itemDiscountAmount;
+      } else if (itemDto.discountType === 'fixed' && itemDto.discountAmount) {
+        itemDiscountAmount = Math.min(itemDto.discountAmount, itemTotal);
+        itemFinalPrice = itemTotal - itemDiscountAmount;
+      }
+
       totalPrice += itemTotal;
+      totalDiscountAmount += itemDiscountAmount;
+
       const transactionItem = this.itemRepo.create({
         product,
         quantity: itemDto.quantity,
         price,
         totalPrice: itemTotal,
+        discountType: itemDto.discountType || 'none',
+        discountAmount: itemDiscountAmount,
+        discountPercent: itemDto.discountPercent || 0,
+        finalPrice: itemFinalPrice,
       });
       items.push(transactionItem);
     }
@@ -165,11 +185,31 @@ export class SalesTransactionsService {
       dto.creditorName = undefined;
     }
 
+    // Calculate transaction-level discount
+    let transactionDiscountAmount = 0;
+    let finalTransactionPrice = totalPrice - totalDiscountAmount;
+
+    if (dto.discountType === 'percent' && dto.discountPercent) {
+      transactionDiscountAmount =
+        (finalTransactionPrice * dto.discountPercent) / 100;
+      finalTransactionPrice = finalTransactionPrice - transactionDiscountAmount;
+    } else if (dto.discountType === 'fixed' && dto.discountAmount) {
+      transactionDiscountAmount = Math.min(
+        dto.discountAmount,
+        finalTransactionPrice,
+      );
+      finalTransactionPrice = finalTransactionPrice - transactionDiscountAmount;
+    }
+
     const transaction = this.transactionRepo.create({
       [dto.shopId ? 'shop' : 'warehouse']: location,
       paymentMethod: dto.paymentMethod,
       creditorName: dto.creditorName,
       totalPrice,
+      discountType: dto.discountType || 'none',
+      discountAmount: transactionDiscountAmount,
+      discountPercent: dto.discountPercent || 0,
+      finalPrice: finalTransactionPrice,
       items,
       transactedBy,
       customerType:
@@ -181,7 +221,9 @@ export class SalesTransactionsService {
     const savedTransaction = await this.transactionRepo.save(transaction);
 
     // Decrease stock quantities and update total sold and price
-    for (const itemDto of dto.items) {
+    for (let i = 0; i < dto.items.length; i++) {
+      const itemDto = dto.items[i];
+
       // Decrease quantity
       await this.stockRepo.decrement(
         {
@@ -194,24 +236,35 @@ export class SalesTransactionsService {
         itemDto.quantity,
       );
 
-      // Increment total sold for the product
-
-      // Update the price based on total sold
-      const product = await this.productRepo.findOne({
-        where: { id: itemDto.productId },
-      });
-      const price = Number(product?.price) || 0;
-      const itemTotal = price * itemDto.quantity;
-      await this.stockRepo.increment(
-        {
+      const stock = await this.stockRepo.findOne({
+        where: {
           [dto.shopId ? 'shop' : 'warehouse']: {
             id: dto.shopId || dto.warehouseId,
           },
           product: { id: itemDto.productId },
         },
-        'price',
-        itemTotal,
-      );
+      });
+
+      if (stock) {
+        // Convert to numbers explicitly
+        const currentPrice = Number(stock.price);
+        // Use the transaction's finalPrice instead of item's finalPrice
+        const transactionFinalPrice = Number(savedTransaction.finalPrice);
+
+        // Log values
+
+        // Add the full transaction amount to stock price
+        let newPrice = currentPrice + transactionFinalPrice;
+
+        // Round to 2 decimals
+        newPrice = Number(newPrice.toFixed(2));
+
+        stock.price = newPrice;
+        await this.stockRepo.save(stock);
+      }
+
+      // Increment total sold for the product
+      // Note: Using transaction's total finalPrice instead of individual item prices
     }
 
     return savedTransaction;
