@@ -27,6 +27,12 @@ export enum CustomerType {
   REGULAR = 'Regular',
 }
 
+export enum CreditFrequency {
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+  YEARLY = 'yearly',
+}
+
 @Entity()
 export class SalesTransaction {
   @PrimaryGeneratedColumn('uuid')
@@ -66,6 +72,42 @@ export class SalesTransaction {
 
   @Column('decimal', { precision: 12, scale: 2, nullable: true })
   finalPrice: number;
+
+  // Credit payment fields
+  @Column('int', { nullable: true })
+  creditDuration?: number;
+
+  @Column({
+    type: 'enum',
+    enum: CreditFrequency,
+    nullable: true,
+  })
+  creditFrequency?: CreditFrequency;
+
+  @Column('decimal', { precision: 12, scale: 2, default: 0 })
+  creditPaidAmount: number;
+
+  @Column('decimal', { precision: 12, scale: 2, nullable: true })
+  creditInstallmentAmount?: number;
+
+  @Column({ type: 'date', nullable: true })
+  creditStartDate?: Date;
+
+  @Column({ type: 'date', nullable: true })
+  creditNextDueDate?: Date;
+
+  @Column('simple-json', { nullable: true })
+  creditPaymentHistory?: Array<{
+    date: string;
+    amount: number;
+    remainingAmount: number;
+  }>;
+
+  @Column('int', { default: 0 })
+  creditMissedPayments: number;
+
+  @Column({ type: 'boolean', default: false })
+  creditOverdue: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

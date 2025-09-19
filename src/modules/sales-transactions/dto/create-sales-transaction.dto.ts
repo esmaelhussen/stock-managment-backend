@@ -10,9 +10,10 @@ import {
   ValidateIf,
   IsUUID,
   IsNumber,
+  IsDateString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { PaymentMethod } from '../../../entities/salesTransaction.entity';
+import { PaymentMethod, CreditFrequency } from '../../../entities/salesTransaction.entity';
 
 export class SalesTransactionItemDto {
   @IsString()
@@ -85,4 +86,18 @@ export class CreateSalesTransactionDto {
   @IsOptional()
   @IsEnum(['fixed', 'percent', 'none'])
   discountType?: 'fixed' | 'percent' | 'none';
+
+  // Credit payment fields
+  @ValidateIf((o) => o.paymentMethod === 'credit')
+  @IsInt()
+  @Min(1)
+  creditDuration?: number;
+
+  @ValidateIf((o) => o.paymentMethod === 'credit')
+  @IsEnum(CreditFrequency)
+  creditFrequency?: CreditFrequency;
+
+  @IsOptional()
+  @IsDateString()
+  creditStartDate?: string;
 }

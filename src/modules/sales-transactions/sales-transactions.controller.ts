@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { SalesTransactionsService } from './sales-transactions.service';
 import { CreateSalesTransactionDto } from './dto/create-sales-transaction.dto';
+import { MakeCreditPaymentDto } from './dto/credit-payment.dto';
 import { SalesTransaction } from '../../entities/salesTransaction.entity';
 import type { Request } from 'express';
 
@@ -60,5 +61,35 @@ export class SalesTransactionsController {
       shopId,
       warehouseId,
     );
+  }
+
+  @Post(':id/credit-payment')
+  async makeCreditPayment(
+    @Param('id') id: string,
+    @Body() dto: MakeCreditPaymentDto,
+  ) {
+    return this.salesTransactionsService.makeCreditPayment(id, dto.amount);
+  }
+
+  @Get('credit')
+  async getCreditTransactions(
+    @Query('shopId') shopId?: string,
+    @Query('warehouseId') warehouseId?: string,
+  ): Promise<SalesTransaction[]> {
+    return this.salesTransactionsService.getCreditTransactions(shopId, warehouseId);
+  }
+
+  @Get('credit/overdue')
+  async getOverdueCredits(): Promise<SalesTransaction[]> {
+    return this.salesTransactionsService.getOverdueCredits();
+  }
+
+  @Post('credit/check-overdue')
+  async checkOverdueCredits(): Promise<{ message: string; overdueCount: number }> {
+    const overdueTransactions = await this.salesTransactionsService.checkOverdueCredits();
+    return {
+      message: 'Overdue check completed',
+      overdueCount: overdueTransactions.length,
+    };
   }
 }
