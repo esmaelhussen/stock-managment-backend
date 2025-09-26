@@ -7,6 +7,8 @@ import { Role } from '../../entities/role.entity';
 import { Permission } from '../../entities/permission.entity';
 import { UserRole } from '../../entities/user-role.entity';
 import { RolePermission } from '../../entities/role-permission.entity';
+import { Warehouse } from '../../entities/warehouse.entity';
+import { Shop } from '../../entities/shop.entity';
 
 @Module({
   imports: [
@@ -18,7 +20,15 @@ import { RolePermission } from '../../entities/role-permission.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_DATABASE,
-      entities: [User, Role, Permission, UserRole, RolePermission],
+      entities: [
+        User,
+        Role,
+        Permission,
+        UserRole,
+        RolePermission,
+        Warehouse,
+        Shop,
+      ],
       synchronize: true,
     }),
     TypeOrmModule.forFeature([
@@ -27,6 +37,8 @@ import { RolePermission } from '../../entities/role-permission.entity';
       Permission,
       UserRole,
       RolePermission,
+      Warehouse,
+      Shop,
     ]),
   ],
   providers: [SeedService],

@@ -134,6 +134,221 @@ export class SeedService {
         resource: 'stock',
         action: 'delete',
       },
+      // dashboard permissions (for future use)
+      {
+        name: 'dashboards.read',
+        description: 'view dashboard',
+        resource: 'dashboard',
+        action: 'read',
+      },
+
+      // warehouse permissions (for future use)
+      {
+        name: 'warehouses.create',
+        description: 'Create warehouse',
+        resource: 'warehouses',
+        action: 'create',
+      },
+      {
+        name: 'warehouses.read',
+        description: 'View warehouse ',
+        resource: 'warehouses',
+        action: 'read',
+      },
+      {
+        name: 'warehouses.update',
+        description: 'Update warehouse',
+        resource: 'warehouses',
+        action: 'update',
+      },
+      {
+        name: 'warehouses.delete',
+        description: 'delete warehouse',
+        resource: 'warehouses',
+        action: 'delete',
+      },
+
+      // categories permissions (for future use)
+      {
+        name: 'categories.create',
+        description: 'Create category',
+        resource: 'categories',
+        action: 'create',
+      },
+      {
+        name: 'categories.read',
+        description: 'View category',
+        resource: 'categories',
+        action: 'read',
+      },
+      {
+        name: 'categories.update',
+        description: 'Update category',
+        resource: 'categories',
+        action: 'update',
+      },
+      {
+        name: 'categories.delete',
+        description: 'delete category',
+        resource: 'categories',
+        action: 'delete',
+      },
+
+      // units permissions (for future use)
+      {
+        name: 'units.create',
+        description: 'Create unit',
+        resource: 'units',
+        action: 'create',
+      },
+      {
+        name: 'units.read',
+        description: 'View unit',
+        resource: 'units',
+        action: 'read',
+      },
+      {
+        name: 'units.update',
+        description: 'Update unit',
+        resource: 'units',
+        action: 'update',
+      },
+      {
+        name: 'units.delete',
+        description: 'delete unit',
+        resource: 'units',
+        action: 'delete',
+      },
+
+      // product permissions (for future use)
+      {
+        name: 'products.create',
+        description: 'Create product',
+        resource: 'products',
+        action: 'create',
+      },
+      {
+        name: 'products.read',
+        description: 'View product',
+        resource: 'products',
+        action: 'read',
+      },
+      {
+        name: 'products.update',
+        description: 'Update product',
+        resource: 'products',
+        action: 'update',
+      },
+      {
+        name: 'products.delete',
+        description: 'delete product',
+        resource: 'products',
+        action: 'delete',
+      },
+
+      // shop permissions (for future use)
+      {
+        name: 'shops.create',
+        description: 'Create shop',
+        resource: 'shops',
+        action: 'create',
+      },
+      {
+        name: 'shops.read',
+        description: 'View shop',
+        resource: 'shops',
+        action: 'read',
+      },
+      {
+        name: 'shops.update',
+        description: 'Update shop',
+        resource: 'shops',
+        action: 'update',
+      },
+      {
+        name: 'shops.delete',
+        description: 'delete shop',
+        resource: 'shops',
+        action: 'delete',
+      },
+
+      // sales permissions (for future use)
+      {
+        name: 'sales.create',
+        description: 'Create sale',
+        resource: 'sales',
+        action: 'create',
+      },
+      {
+        name: 'sales.read',
+        description: 'View sale',
+        resource: 'sales',
+        action: 'read',
+      },
+      {
+        name: 'sales.update',
+        description: 'Update sale',
+        resource: 'sales',
+        action: 'update',
+      },
+      {
+        name: 'sales.delete',
+        description: 'delete sale',
+        resource: 'sales',
+        action: 'delete',
+      },
+
+      // brands permissions (for future use)
+      {
+        name: 'brands.create',
+        description: 'Create brands',
+        resource: 'brands',
+        action: 'create',
+      },
+      {
+        name: 'brands.read',
+        description: 'View brands',
+        resource: 'brands',
+        action: 'read',
+      },
+      {
+        name: 'brands.update',
+        description: 'Update brands',
+        resource: 'brands',
+        action: 'update',
+      },
+      {
+        name: 'brands.delete',
+        description: 'delete brands',
+        resource: 'brands',
+        action: 'delete',
+      },
+
+      // customers permissions (for future use)
+      {
+        name: 'customers.create',
+        description: 'Create customers',
+        resource: 'customers',
+        action: 'create',
+      },
+      {
+        name: 'customers.read',
+        description: 'View customers',
+        resource: 'customers',
+        action: 'read',
+      },
+      {
+        name: 'customers.update',
+        description: 'Update customers',
+        resource: 'customers',
+        action: 'update',
+      },
+      {
+        name: 'customers.delete',
+        description: 'delete customers',
+        resource: 'customers',
+        action: 'delete',
+      },
     ];
 
     for (const permission of permissions) {
@@ -173,6 +388,39 @@ export class SeedService {
           'stock.read',
           'stock.update',
           'stock.delete',
+          'dashboards.read',
+          'warehouses.create',
+          'warehouses.read',
+          'warehouses.update',
+          'warehouses.delete',
+          'categories.create',
+          'categories.read',
+          'categories.update',
+          'categories.delete',
+          'units.create',
+          'units.read',
+          'units.update',
+          'units.delete',
+          'products.create',
+          'products.read',
+          'products.update',
+          'products.delete',
+          'shops.create',
+          'shops.read',
+          'shops.update',
+          'shops.delete',
+          'sales.create',
+          'sales.read',
+          'sales.update',
+          'sales.delete',
+          'brands.create',
+          'brands.read',
+          'brands.update',
+          'brands.delete',
+          'customers.create',
+          'customers.read',
+          'customers.update',
+          'customers.delete',
         ],
       },
       {
