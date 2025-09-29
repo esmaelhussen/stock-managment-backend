@@ -19,7 +19,7 @@ export const AppDataSource = new DataSource({
   entities: [__dirname + '/entities/*{.ts,.js}'],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
   synchronize: false,
-  // ssl: { rejectUnauthorized: false },
+  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
 });
 
 // Keep a single export of the DataSource (named). TypeORM CLI expects exactly one DataSource export.
