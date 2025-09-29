@@ -38,7 +38,8 @@ import { CustomerModule } from './modules/customers/customer.module';
         database: configService.get('DB_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         synchronize: false,
-        // ssl: { rejectUnauthorized: false },
+        ssl:
+          process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
       }),
       inject: [ConfigService],
     }),
