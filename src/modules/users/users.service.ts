@@ -9,6 +9,8 @@ import { Repository, In } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { UserRole } from '../../entities/user-role.entity';
 import { Role } from '../../entities/role.entity';
+import { Warehouse } from '../../entities/warehouse.entity';
+import { Shop } from 'src/entities/shop.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -17,11 +19,19 @@ import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UsersService {
   async findOneByResetToken(token: string): Promise<User | null> {
-    return await this.usersRepository.findOne({ where: { resetPasswordToken: token } });
+    return await this.usersRepository.findOne({
+      where: { resetPasswordToken: token },
+    });
   }
-  async changePassword(id: string, changePasswordDto: ChangePasswordDto): Promise<{ message: string }> {
+  async changePassword(
+    id: string,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string }> {
     const { oldPassword, newPassword } = changePasswordDto;
-    const user = await this.usersRepository.findOne({ where: { id }, select: ['id', 'password'] });
+    const user = await this.usersRepository.findOne({
+      where: { id },
+      select: ['id', 'password'],
+    });
     if (!user) {
       throw new NotFoundException('User not found');
     }
@@ -40,6 +50,10 @@ export class UsersService {
     private userRolesRepository: Repository<UserRole>,
     @InjectRepository(Role)
     private rolesRepository: Repository<Role>,
+    @InjectRepository(Warehouse)
+    private warehouseRepository: Repository<Warehouse>,
+    @InjectRepository(Shop)
+    private shopRepository: Repository<Shop>,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -54,6 +68,62 @@ export class UsersService {
         'User with this email or phone number already exists',
       );
     }
+
+    const roles = roleIds?.length
+      ? await this.rolesRepository.find({ where: { id: In(roleIds) } })
+      : [];
+
+    const hasWarehouseRole = roles.some(
+      (role) => role.name.toLowerCase() === 'warehouse',
+    );
+
+    const hasShopRole = roles.some(
+      (role) => role.name.toLowerCase() === 'shop',
+    );
+
+    // Validate warehouseId for warehouse or shop roles
+    if (hasWarehouseRole && !createUserDto.warehouseId) {
+      throw new BadRequestException(
+        'Warehouse ID is required for warehouse role',
+      );
+    }
+
+    if (hasShopRole && !createUserDto.shopId) {
+      throw new BadRequestException('shop ID is required for shop role');
+    }
+
+    // Validate warehouseId should not exist for non-warehouse/shop roles
+    if (!hasWarehouseRole && createUserDto.warehouseId) {
+      throw new BadRequestException(
+        'Warehouse ID should not exist for non-warehouse roles',
+      );
+    }
+
+    // Validate shopId if user has shop role
+    if (hasShopRole && !createUserDto.shopId) {
+      throw new BadRequestException('Shop ID is required for shop role');
+    }
+
+    if (hasWarehouseRole && !createUserDto.warehouseId) {
+      throw new BadRequestException(
+        'Warehouse ID is required for warehouse role',
+      );
+    }
+
+    // Validate shopId should not exist for non-shop roles
+    if (!hasShopRole && createUserDto.shopId) {
+      throw new BadRequestException(
+        'Shop ID should not exist for non-shop roles',
+      );
+    }
+
+    // Optional: Validate that shop belongs to warehouse
+    // if (hasShopRole) {
+    //   const shop = await this.shopRepository.findOne({
+    //     where: { id: createUserDto.shopId },
+    //     relations: ['warehouse'],
+    //   });
+    // }
 
     const user = this.usersRepository.create(userData);
     const savedUser = await this.usersRepository.save(user);
@@ -95,7 +165,16 @@ export class UsersService {
   async findByEmail(email: string): Promise<User | null> {
     const user = await this.usersRepository.findOne({
       where: { email },
-      select: ['id', 'email', 'password', 'firstName', 'lastName', 'isActive'],
+      select: [
+        'id',
+        'email',
+        'password',
+        'firstName',
+        'lastName',
+        'isActive',
+        'warehouseId',
+        'shopId',
+      ],
       relations: [
         'userRoles',
         'userRoles.role',
@@ -172,5 +251,34 @@ export class UsersService {
     });
 
     return Array.from(permissions);
+  }
+
+  async getWarehouse(warehouseId: string) {
+    console.log(`Fetching warehouse with ID: ${warehouseId}`);
+
+    const warehouse = await this.warehouseRepository.findOne({
+      where: { id: warehouseId },
+    }); // Removed unnecessary relations
+
+    if (!warehouse) {
+      console.error(`Warehouse with ID ${warehouseId} not found`);
+      throw new NotFoundException(`Warehouse with ID ${warehouseId} not found`);
+    }
+
+    return warehouse;
+  }
+  async getShop(shopId: string) {
+    console.log(`Fetching shop with ID: ${shopId}`);
+
+    const shop = await this.shopRepository.findOne({
+      where: { id: shopId },
+    }); // Removed unnecessary relations
+
+    if (!shop) {
+      console.error(`shop with ID ${shopId} not found`);
+      throw new NotFoundException(`shop with ID ${shopId} not found`);
+    }
+
+    return shop;
   }
 }

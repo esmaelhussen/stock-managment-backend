@@ -11,6 +11,15 @@ import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/guards/roles.guard';
 import { PermissionsGuard } from './modules/auth/guards/permissions.guard';
+import { CategoriesModule } from './modules/categories/categories.module';
+import { WarehouseModule } from './modules/warehouse/warehouse.module';
+import { UnitsModule } from './modules/units/units.module';
+import { ProductsModule } from './modules/products/products.module';
+import { StockTransactionModule } from './modules/stock-transactions/stockTransaction.module';
+import { ShopModule } from './modules/shop/shop.module';
+import { SalesTransactionsModule } from './modules/sales-transactions/sales-transactions.module';
+import { BrandsModule } from './modules/brands/brands.module';
+import { CustomerModule } from './modules/customers/customer.module';
 
 @Module({
   imports: [
@@ -28,7 +37,9 @@ import { PermissionsGuard } from './modules/auth/guards/permissions.guard';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true,
+        synchronize: false,
+        ssl:
+          process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
       }),
       inject: [ConfigService],
     }),
@@ -36,6 +47,15 @@ import { PermissionsGuard } from './modules/auth/guards/permissions.guard';
     UsersModule,
     RolesModule,
     PermissionsModule,
+    CategoriesModule,
+    WarehouseModule,
+    UnitsModule,
+    ProductsModule,
+    StockTransactionModule,
+    ShopModule,
+    SalesTransactionsModule,
+    BrandsModule,
+    CustomerModule,
   ],
   controllers: [AppController],
   providers: [

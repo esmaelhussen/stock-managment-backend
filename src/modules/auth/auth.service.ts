@@ -49,6 +49,18 @@ export class AuthService {
     const permissions = await this.usersService.getUserPermissions(user.id);
     const roles = user.userRoles.map((ur) => ur.role.name);
 
+    console.log(`User warehouseId: ${user.warehouseId}`);
+
+    const warehouse = user.warehouseId
+      ? await this.usersService.getWarehouse(user.warehouseId)
+      : null;
+    const shop = user.shopId
+      ? await this.usersService.getShop(user.shopId)
+      : null;
+
+    console.log(`Fetched warehouse:`, warehouse);
+    console.log(`Fetched shop:`, shop);
+
     const payload = {
       sub: user.id,
       email: user.email,
@@ -56,6 +68,8 @@ export class AuthService {
       lastName: user.lastName,
       roles,
       permissions,
+      warehouse,
+      shop,
     };
 
     return {
@@ -67,6 +81,8 @@ export class AuthService {
         lastName: user.lastName,
         roles,
         permissions,
+        warehouse,
+        shop,
       },
     };
   }
@@ -147,29 +163,25 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPasswordDto) {
-    console.log('ResetPasswordDto token:', dto.token);
     const user = await this.usersService.findOneByResetToken(dto.token);
-    console.log('User found by token:', user?.id, user?.resetPasswordToken);
     if (
       !user ||
       !user.resetPasswordToken ||
       user.resetPasswordToken !== dto.token
     ) {
-      console.log('Token mismatch or missing:', {
-        userToken: user?.resetPasswordToken,
-        dtoToken: dto.token
-      });
       throw new BadRequestException('Invalid or expired token');
     }
     if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
-      console.log('Token expired:', user.resetPasswordExpires);
       throw new BadRequestException('Token expired');
     }
-    user.password = dto.newPassword;
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
+    user.password = hashedPassword;
+
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await this.usersService.update(user.id, user);
-    console.log('Password reset successful for user:', user.id);
     return { message: 'Password has been reset successfully.' };
   }
 }

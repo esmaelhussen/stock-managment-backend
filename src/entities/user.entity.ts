@@ -7,9 +7,13 @@ import {
   OneToMany,
   BeforeInsert,
   BeforeUpdate,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { UserRole } from './user-role.entity';
+import { Warehouse } from './warehouse.entity';
+import { Shop } from './shop.entity';
 
 @Entity('users')
 export class User {
@@ -40,12 +44,25 @@ export class User {
   @Column({ default: true })
   isActive: boolean;
 
+  @ManyToOne(() => Warehouse, { eager: true })
+  @JoinColumn({ name: 'warehouse_id' })
+  warehouse: Warehouse;
+
+  @Column({ name: 'warehouse_id', nullable: true })
+  warehouseId: string;
+
+  @ManyToOne(() => Shop, { eager: true })
+  @JoinColumn({ name: 'shop_id' })
+  shop: Shop;
+
+  @Column({ name: 'shop_id', nullable: true })
+  shopId: string;
+
   @OneToMany(() => UserRole, (userRole) => userRole.user, { eager: true })
   userRoles: UserRole[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
-
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
