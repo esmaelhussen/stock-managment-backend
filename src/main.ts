@@ -4,9 +4,14 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { join } from 'path';
 import * as express from 'express';
+import { SeedService } from './modules/seed/seed.service'; // ← import SeedService
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Run seed automatically
+  const seedService = app.get(SeedService);
+  await seedService.seed(); // ← seeds roles, permissions, admin user
 
   app.enableCors({
     origin: true,
