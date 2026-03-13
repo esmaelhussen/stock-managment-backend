@@ -37,7 +37,7 @@ import { CustomerModule } from './modules/customers/customer.module';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: false,
+        synchronize: true,
         ssl:
           process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
       }),
